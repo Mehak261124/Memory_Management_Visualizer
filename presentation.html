@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeonHeap – Memory Allocation Visualizer</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0a0a0f;
+  --panel: #111122;
+  --cyan: #00d4ff;
+  --magenta: #ff00ff;
+  --green: #00ff88;
+  --text: #e6e6e6;
+  --muted: #9aa0b3;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: radial-gradient(circle at top, #1a1a2e, var(--bg));
+  color: var(--text);
+  overflow: hidden;
+}
+
+.slide {
+  display: none;
+  height: 100vh;
+  padding: 70px 120px;
+}
+
+.slide.active {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Progress bar */
+.progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  transition: width .3s ease;
+}
+
+/* ---------- TITLE SLIDE ---------- */
+.title {
+  align-items: center;
+  text-align: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 40px;
+}
+
+.logo-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--cyan), var(--magenta));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Orbitron;
+  font-weight: 900;
+  font-size: 28px;
+  color: #000;
+}
+
+.logo-text {
+  font-family: Orbitron;
+  font-size: 30px;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.title h1 {
+  font-family: Orbitron;
+  font-size: 3rem;
+  letter-spacing: 3px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: var(--cyan);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 50px;
+}
+
+.team-box {
+  padding: 24px 48px;
+  border: 1px solid rgba(0,212,255,.25);
+  border-radius: 18px;
+  background: rgba(255,255,255,.03);
+}
+
+.team-box h3 {
+  color: var(--magenta);
+  letter-spacing: 3px;
+  font-family: Orbitron;
+  margin-bottom: 8px;
+}
+
+.team-box span { color: var(--cyan); }
+
+/* ---------- CONTENT SLIDES ---------- */
+.header {
+  font-family: Orbitron;
+  font-size: 2.2rem;
+  color: var(--cyan);
+  margin-bottom: 40px;
+  border-bottom: 1px solid rgba(0,212,255,.3);
+  padding-bottom: 12px;
+}
+
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  font-size: 1.35rem;
+}
+
+.point {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.bullet { color: var(--cyan); }
+
+.cyan { color: var(--cyan); font-weight:600; }
+.magenta { color: var(--magenta); font-weight:600; }
+.green { color: var(--green); font-weight:600; }
+
+/* ---------- DEMO SLIDE ---------- */
+.demo {
+  font-size: 1.6rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ---------- THANK YOU ---------- */
+.thanks {
+  text-align: center;
+}
+
+.thanks h1 {
+  font-family: Orbitron;
+  font-size: 3rem;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.thanks p {
+  margin-top: 12px;
+  font-size: 1.4rem;
+  color: var(--muted);
+}
+
+/* ---------- NAV ---------- */
+.nav {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+}
+
+button {
+  background: transparent;
+  border: 1px solid rgba(0,212,255,.4);
+  color: var(--cyan);
+  padding: 10px 26px;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.counter {
+  position: fixed;
+  bottom: 26px;
+  right: 40px;
+  font-family: Orbitron;
+  color: #666;
+}
+.counter span { color: var(--cyan); }
+</style>
+</head>
+
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- SLIDE 1 -->
+<section class="slide title active">
+  <div class="logo">
+    <div class="logo-box">N</div>
+    <div class="logo-text">NeonHeap</div>
+  </div>
+
+  <h1>Memory Allocation Visualizer</h1>
+  <div class="subtitle">Dynamic Partitioning Simulator</div>
+
+  <div class="team-box">
+    <h3>TEAM END</h3>
+    <p><span>Mehak Jain</span> (230079) | <span>Anuj Kumar Singh</span> (20073)</p>
+    <p><span>Evaluator: </span>Brijesh Shukla</p>
+  </div>
+</section>
+
+<!-- SLIDE 2 -->
+<section class="slide">
+  <div class="header">Problem Relevance</div>
+  <div class="points">
+    <div class="point"><div class="bullet">▸</div>Memory Management is a <span class="green">core OS responsibility</span></div>
+    <div class="point"><div class="bullet">▸</div>Dynamic partitioning suffers from <span class="cyan">external fragmentation</span></div>
+    <div class="point"><div class="bullet">▸</div>Understanding allocation strategies improves <span class="magenta">system efficiency</span></div>
+  </div>
+</section>
+
+<!-- SLIDE 3 -->
+<section class="slide">
+  <div class="header">Algorithms Used</div>
+  <div class="points">
+    <div class="point"><div class="bullet">▸</div><span class="cyan">First Fit</span> – fastest allocation, higher fragmentation</div>
+    <div class="point"><div class="bullet">▸</div><span class="magenta">Best Fit</span> – minimal waste, many small holes</div>
+    <div class="point"><div class="bullet">▸</div><span class="green">Worst Fit</span> – leaves large holes for future use</div>
+  </div>
+</section>
+
+<!-- SLIDE 4 -->
+<section class="slide">
+  <div class="header">OS Concepts Covered</div>
+  <div class="points">
+    <div class="point"><div class="bullet">▸</div>Dynamic memory partitioning</div>
+    <div class="point"><div class="bullet">▸</div>External fragmentation calculation</div>
+    <div class="point"><div class="bullet">▸</div>Hole coalescing on deallocation</div>
+  </div>
+</section>
+
+<!-- SLIDE 5 -->
+<section class="slide">
+  <div class="header">Live Demo</div>
+  <div class="demo">
+    Allocation • Deallocation • Fragmentation • Comparison  
+    <br/><br/>
+    (Demonstrated using NeonHeap Web Interface)
+  </div>
+</section>
+
+<!-- SLIDE 6 -->
+<section class="slide thanks">
+  <h1>Thank You</h1>
+  <p>Questions?</p>
+</section>
+
+<div class="nav">
+  <button onclick="prev()">← Previous</button>
+  <button onclick="next()">Next →</button>
+</div>
+
+<div class="counter">
+  <span id="cur">1</span> / <span id="tot">6</span>
+</div>
+
+<script>
+let i = 0;
+const slides = document.querySelectorAll('.slide');
+
+function show(n){
+  slides.forEach(s=>s.classList.remove('active'));
+  slides[n].classList.add('active');
+  document.getElementById('cur').textContent = n+1;
+  document.getElementById('progress').style.width = ((n+1)/slides.length*100)+'%';
+}
+
+function next(){ i = (i+1)%slides.length; show(i); }
+function prev(){ i = (i-1+slides.length)%slides.length; show(i); }
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight' || e.key===' ') next();
+  if(e.key==='ArrowLeft') prev();
+});
+
+show(i);
+</script>
+
+</body>
+</html>
