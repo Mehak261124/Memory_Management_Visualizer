@@ -1,12 +1,14 @@
 /*
 ================================================================================
 FILE: main.c
-PURPOSE: Main program - Text-based memory allocation visualizer
+PURPOSE: Main program - Entry point for the Memory Allocation Visualizer
 DESCRIPTION: 
-    - Interactive menu system
-    - Demonstrates First Fit, Best Fit, Worst Fit algorithms
-    - Text-based visualization (works on all systems)
-    - Complete memory management simulation
+    - Supports TWO modes:
+      1. Interactive menu (default) - Text-based memory allocation visualizer
+      2. HTTP server mode (--server flag) - JSON API for React frontend
+    - Usage:
+      ./memory_visualizer              → Interactive menu mode
+      ./memory_visualizer --server 8080 → Start HTTP API server on port 8080
 ================================================================================
 */
 
@@ -15,6 +17,9 @@ DESCRIPTION:
 #include <stdlib.h>
 #include <string.h>
 #include "../include/memory_manager.h"
+#include "../include/http_server.h"
+#include "../include/os_memory.h"
+
 
 /*
 ================================================================================
@@ -43,8 +48,9 @@ void printMenu() {
     printf("║  5. Display Memory State               ║\n");
     printf("║  6. Show Fragmentation Analysis        ║\n");
     printf("║  7. Compare All Algorithms             ║\n");
-    printf("║  8. Reset Memory                       ║\n");
-    printf("║  9. Exit                               ║\n");
+    printf("║  8. Compact Memory                     ║\n");
+    printf("║  9. Reset Memory                       ║\n");
+    printf("║  0. Exit                               ║\n");
     printf("╚════════════════════════════════════════╝\n");
     printf("Enter choice: ");
 }
@@ -62,12 +68,14 @@ void printWelcome() {
     printf("╔═══════════════════════════════════════════════╗\n");
     printf("║                                               ║\n");
     printf("║    MEMORY ALLOCATION VISUALIZER               ║\n");
-    printf("║    Dynamic Partitioning Simulator            ║\n");
+    printf("║    Dynamic Partitioning Simulator             ║\n");
     printf("║                                               ║\n");
     printf("║    Demonstrates:                              ║\n");
     printf("║    • First Fit Algorithm                      ║\n");
     printf("║    • Best Fit Algorithm                       ║\n");
     printf("║    • Worst Fit Algorithm                      ║\n");
+    printf("║    • Memory Compaction                        ║\n");
+    printf("║    • Buddy System                             ║\n");
     printf("║    • External Fragmentation                   ║\n");
     printf("║                                               ║\n");
     printf("╚═══════════════════════════════════════════════╝\n");
@@ -167,7 +175,9 @@ void compareAlgorithms(MemoryManager *mm) {
     printf("═══════════════════════════════════════════════\n");
     
     MemoryManager mm1;
-    initializeMemory(&mm1, 1024, 256);
+    int t1_total, t1_os;
+    os_detect_memory_sizes(&t1_total, &t1_os);
+    initializeMemory(&mm1, t1_total, t1_os);
     
     for (int i = 0; i < numTests; i++) {
         int result = allocateMemory(&mm1, i + 1, testSizes[i], FIRST_FIT);
@@ -195,7 +205,9 @@ void compareAlgorithms(MemoryManager *mm) {
     printf("═══════════════════════════════════════════════\n");
     
     MemoryManager mm2;
-    initializeMemory(&mm2, 1024, 256);
+    int t2_total, t2_os;
+    os_detect_memory_sizes(&t2_total, &t2_os);
+    initializeMemory(&mm2, t2_total, t2_os);
     
     for (int i = 0; i < numTests; i++) {
         int result = allocateMemory(&mm2, i + 1, testSizes[i], BEST_FIT);
@@ -223,7 +235,9 @@ void compareAlgorithms(MemoryManager *mm) {
     printf("═══════════════════════════════════════════════\n");
     
     MemoryManager mm3;
-    initializeMemory(&mm3, 1024, 256);
+    int t3_total, t3_os;
+    os_detect_memory_sizes(&t3_total, &t3_os);
+    initializeMemory(&mm3, t3_total, t3_os);
     
     for (int i = 0; i < numTests; i++) {
         int result = allocateMemory(&mm3, i + 1, testSizes[i], WORST_FIT);
@@ -286,16 +300,25 @@ FUNCTION: main
 ================================================================================
 PURPOSE: Main program entry point
 
-WHAT IT DOES:
-1. Shows welcome message
-2. Initializes memory
-3. Shows menu in a loop
-4. Processes user choices
-5. Calls appropriate functions
-6. Continues until user exits
+SUPPORTS TWO MODES:
+1. Interactive menu (default):
+   ./memory_visualizer
+   
+2. HTTP server mode:
+   ./memory_visualizer --server 8080
+
+HOW THE --server FLAG WORKS:
+We check command-line arguments (argc/argv):
+- argc = count of arguments
+- argv = array of argument strings
+Example: "./memory_visualizer --server 8080"
+  argv[0] = "./memory_visualizer"
+  argv[1] = "--server"
+  argv[2] = "8080"
+  argc = 3
 */
 
-int main() {
+int main(int argc, char *argv[]) {
     
     // Variables
     MemoryManager mm;           // Memory manager structure
@@ -306,12 +329,39 @@ int main() {
     int nextProcessID = 1;      // Next available process ID
     char algoName[20] = "NONE"; // Current algorithm name
     
+    // Dynamically detect system memory using OS system calls
+    // Uses sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGE_SIZE) to detect real RAM
+    int detectedTotal, detectedOS;
+    os_detect_memory_sizes(&detectedTotal, &detectedOS);
+    initializeMemory(&mm, detectedTotal, detectedOS);
+    
+    // ========== CHECK FOR --server FLAG ==========
+    // If user passed "--server", start the HTTP API server
+    // instead of the interactive menu
+    if (argc >= 2 && strcmp(argv[1], "--server") == 0) {
+        
+        // Get port number (default: 8080)
+        int port = 8080;
+        if (argc >= 3) {
+            port = atoi(argv[2]);
+            if (port <= 0 || port > 65535) {
+                printf("Error: Invalid port number. Using default 8080.\n");
+                port = 8080;
+            }
+        }
+        
+        // Start the HTTP server (this blocks until Ctrl+C)
+        printf("Starting HTTP API server...\n");
+        startServer(&mm, port);
+        
+        // Cleanup (only reached if server stops)
+        freeMemoryManager(&mm);
+        return 0;
+    }
+    
+    // ========== INTERACTIVE MENU MODE ==========
     // Display welcome banner
     printWelcome();
-    
-    // Initialize memory
-    // Total: 1024 KB, OS: 256 KB, User: 768 KB
-    initializeMemory(&mm, 1024, 256);
     
     printf("Memory initialized successfully!\n");
     printf("Press Enter to start...");
@@ -420,21 +470,23 @@ int main() {
                 
                 // Show current processes
                 printf("Current processes in memory:\n");
-                MemoryBlock *current = mm.head;
-                int hasProcesses = 0;
-                while (current != NULL) {
-                    if (!current->isHole) {
-                        printf("  P%d (%d KB at address %d)\n", 
-                               current->processID, current->size, 
-                               current->startAddress);
-                        hasProcesses = 1;
+                {
+                    MemoryBlock *current = mm.head;
+                    int hasProcesses = 0;
+                    while (current != NULL) {
+                        if (!current->isHole) {
+                            printf("  P%d (%d KB at address %d)\n", 
+                                   current->processID, current->size, 
+                                   current->startAddress);
+                            hasProcesses = 1;
+                        }
+                        current = current->next;
                     }
-                    current = current->next;
-                }
-                
-                if (!hasProcesses) {
-                    printf("  No processes in memory.\n");
-                    break;
+                    
+                    if (!hasProcesses) {
+                        printf("  No processes in memory.\n");
+                        break;
+                    }
                 }
                 
                 printf("\nEnter process ID to deallocate: ");
@@ -503,28 +555,47 @@ int main() {
                 break;
             
             
-            // ========== CASE 8: RESET MEMORY ==========
+            // ========== CASE 8: COMPACT MEMORY ==========
             case 8:
-                printf("\n--- RESET MEMORY ---\n");
-                printf("Are you sure? This will remove all processes. (y/n): ");
-                char confirm;
-                scanf(" %c", &confirm);
-                
-                if (confirm == 'y' || confirm == 'Y') {
-                    freeMemoryManager(&mm);
-                    initializeMemory(&mm, 1024, 256);
-                    nextProcessID = 1;
-                    strcpy(algoName, "NONE");
-                    printf("\n✓ Memory reset successfully!\n");
-                    displayMemory(&mm);
-                } else {
-                    printf("\nReset cancelled.\n");
+                printf("\n--- COMPACT MEMORY ---\n");
+                {
+                    char resultBuf[1024];
+                    int compacted = compact(&mm, resultBuf, sizeof(resultBuf));
+                    
+                    if (compacted) {
+                        printf("\n✓ Compaction complete!\n");
+                        displayMemory(&mm);
+                        drawMemoryVisualization(&mm);
+                    } else {
+                        printf("\nNothing to compact (no processes in memory).\n");
+                    }
                 }
                 break;
             
             
-            // ========== CASE 9: EXIT ==========
+            // ========== CASE 9: RESET MEMORY ==========
             case 9:
+                printf("\n--- RESET MEMORY ---\n");
+                printf("Are you sure? This will remove all processes. (y/n): ");
+                {
+                    char confirm;
+                    scanf(" %c", &confirm);
+                    
+                    if (confirm == 'y' || confirm == 'Y') {
+                        resetMemory(&mm);
+                        nextProcessID = 1;
+                        strcpy(algoName, "NONE");
+                        printf("\n✓ Memory reset successfully!\n");
+                        displayMemory(&mm);
+                    } else {
+                        printf("\nReset cancelled.\n");
+                    }
+                }
+                break;
+            
+            
+            // ========== CASE 0: EXIT ==========
+            case 0:
                 printf("\n");
                 printf("╔═══════════════════════════════════════╗\n");
                 printf("║  Thank you for using                  ║\n");
@@ -541,7 +612,7 @@ int main() {
             
             // ========== DEFAULT: INVALID CHOICE ==========
             default:
-                printf("\n✗ Invalid choice! Please enter 1-9.\n");
+                printf("\n✗ Invalid choice! Please enter 0-9.\n");
         }
         
         // Pause before showing menu again
@@ -560,23 +631,30 @@ END OF FILE: main.c
 ================================================================================
 
 WHAT WE IMPLEMENTED:
-1. printMenu() - Display interactive menu
-2. printWelcome() - Welcome banner
+1. printMenu() - Display interactive menu (updated with compaction option)
+2. printWelcome() - Welcome banner (updated with compaction/buddy info)
 3. drawMemoryVisualization() - ASCII art memory representation
 4. compareAlgorithms() - Test and compare all three algorithms
-5. main() - Main program loop with full menu system
+5. main() - Main program with TWO modes:
+   - Interactive menu mode (default)
+   - HTTP server mode (--server flag)
 
 FEATURES:
-✓ Interactive menu (9 options)
+✓ Interactive menu (10 options: 0-9)
 ✓ All three allocation algorithms
 ✓ Deallocation with hole merging
 ✓ Memory visualization (text-based)
 ✓ Fragmentation analysis
 ✓ Algorithm comparison
+✓ Memory compaction
 ✓ Memory reset
 ✓ Input validation
 ✓ Error handling
-✓ Professional output formatting
+✓ HTTP server mode for React frontend
+
+HOW TO USE:
+  Interactive:  ./memory_visualizer
+  HTTP Server:  ./memory_visualizer --server 8080
 
 COMPLETE PROJECT - READY TO COMPILE AND RUN!
 ================================================================================

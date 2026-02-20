@@ -6,6 +6,8 @@ DESCRIPTION:
     - This file declares the "main" functions of our project
     - Allocation algorithms (First Fit, Best Fit, Worst Fit)
     - Memory operations (allocate, deallocate, display, etc.)
+    - Defragmentation techniques (Compaction, Buddy System)
+    - JSON output functions for the HTTP API
 ================================================================================
 */
 
@@ -46,14 +48,6 @@ typedef enum {
     WORST_FIT       // Allocate to largest hole
 } AllocationAlgorithm;
 
-/*
-EXAMPLE USAGE:
-AllocationAlgorithm myAlgo = FIRST_FIT;
-if (myAlgo == FIRST_FIT) {
-    printf("Using First Fit algorithm\n");
-}
-*/
-
 
 /*
 ================================================================================
@@ -74,6 +68,7 @@ WHAT IT DOES:
 2. Reserves space for OS
 3. Calculates user memory
 4. Creates one big initial hole (all memory is free at start)
+5. Resets all statistics counters
 
 PARAMETERS:
 - mm: Pointer to MemoryManager structure (we'll fill this in)
@@ -81,15 +76,6 @@ PARAMETERS:
 - osMem: Memory reserved for OS in KB (example: 256 KB)
 
 RETURNS: Nothing (void)
-
-EXAMPLE CALL:
-MemoryManager mm;
-initializeMemory(&mm, 1024, 256);
-// This creates: 1024 KB total, 256 KB for OS, 768 KB for user
-
-VISUAL REPRESENTATION:
-Before: [nothing]
-After:  [OS: 0-255][HOLE: 256-1023]
 */
 void initializeMemory(MemoryManager *mm, int totalMem, int osMem);
 
@@ -100,12 +86,6 @@ FUNCTION: allocateMemory
 --------------------------------------------------------------------------------
 PURPOSE: Allocate memory to a process using specified algorithm
 
-WHAT IT DOES:
-1. Takes a process and its size
-2. Uses the specified algorithm (First/Best/Worst Fit)
-3. Finds a suitable hole
-4. Assigns memory to the process
-
 PARAMETERS:
 - mm: Pointer to MemoryManager
 - processID: ID of the process requesting memory
@@ -115,18 +95,6 @@ PARAMETERS:
 RETURNS: 
 - Starting address where process was allocated (success)
 - -1 if allocation failed (no suitable hole found)
-
-EXAMPLE CALL:
-int addr = allocateMemory(&mm, 1, 100, FIRST_FIT);
-// Try to allocate 100 KB to Process P1 using First Fit
-// If successful, addr will be the starting address (e.g., 256)
-// If failed, addr will be -1
-
-EXAMPLE SCENARIO:
-Memory: [OS][HOLE: 256-455][P1][HOLE: 600-1023]
-Call: allocateMemory(&mm, 2, 100, FIRST_FIT);
-Result: Process P2 gets 256-355, returns 256
-New Memory: [OS][P2: 256-355][HOLE: 356-455][P1][HOLE: 600-1023]
 */
 int allocateMemory(MemoryManager *mm, int processID, int size, 
                    AllocationAlgorithm algo);
@@ -151,22 +119,6 @@ PARAMETERS:
 RETURNS:
 - 1 if deallocation successful
 - 0 if process not found
-
-EXAMPLE CALL:
-int result = deallocateMemory(&mm, 2);
-// Remove Process P2 from memory
-// result = 1 if successful, 0 if P2 not found
-
-EXAMPLE SCENARIO:
-Before: [OS][P1][P2: 256-355][HOLE: 356-455][P3]
-Call: deallocateMemory(&mm, 2);
-After:  [OS][P1][HOLE: 256-455][P3]
-        // P2's space merged with adjacent hole!
-
-WHY MERGE HOLES?
-If we don't merge, we get many small holes that can't be used:
-[HOLE:10KB][HOLE:10KB][HOLE:10KB] = Can't fit a 25KB process!
-[HOLE:30KB] = Can fit a 25KB process!
 */
 int deallocateMemory(MemoryManager *mm, int processID);
 
@@ -177,30 +129,10 @@ FUNCTION: displayMemory
 --------------------------------------------------------------------------------
 PURPOSE: Show current state of memory on screen
 
-WHAT IT DOES:
-1. Prints OS region
-2. Prints all memory blocks (processes and holes)
-3. Shows statistics (free memory, processes, holes)
-
 PARAMETERS:
 - mm: Pointer to MemoryManager
 
 RETURNS: Nothing (void)
-
-EXAMPLE OUTPUT:
-========== MEMORY STATE ==========
-|  Type  |   Address   |    Size     |
-==================================
-| OS     |    0 -  255 | Size:  256 KB |
-----------------------------------
-| P1     |  256 -  355 | Size:  100 KB |
-| HOLE   |  356 -  455 | Size:  100 KB |
-| P2     |  456 -  655 | Size:  200 KB |
-| HOLE   |  656 - 1023 | Size:  368 KB |
-==================================
-Free Memory: 468 KB
-Processes: 2 | Holes: 2
-==================================
 */
 void displayMemory(MemoryManager *mm);
 
@@ -210,15 +142,6 @@ void displayMemory(MemoryManager *mm);
 FUNCTION: calculateFragmentation
 --------------------------------------------------------------------------------
 PURPOSE: Calculate external fragmentation percentage
-
-WHAT IS EXTERNAL FRAGMENTATION?
-When free memory exists but is scattered in small pieces that can't be used.
-
-EXAMPLE:
-Total free: 500 KB
-But scattered as: [100KB][50KB][150KB][200KB] in different places
-A 300KB process can't fit even though 500KB is free!
-The 300KB of smaller holes is "fragmented" and wasted.
 
 HOW WE CALCULATE:
 1. Find largest single hole
@@ -230,19 +153,6 @@ PARAMETERS:
 
 RETURNS: 
 - Fragmentation percentage (float, 0.0 to 100.0)
-
-EXAMPLE:
-User Memory = 1000 KB
-Total Free = 500 KB distributed as:
-  - Hole 1: 200 KB (largest)
-  - Hole 2: 150 KB
-  - Hole 3: 100 KB
-  - Hole 4: 50 KB
-
-Fragmented memory = 500 - 200 = 300 KB
-Fragmentation % = (300 / 1000) * 100 = 30%
-
-This means 30% of total memory is wasted in small unusable holes.
 */
 float calculateFragmentation(MemoryManager *mm);
 
@@ -253,24 +163,10 @@ FUNCTION: freeMemoryManager
 --------------------------------------------------------------------------------
 PURPOSE: Clean up and release all memory when program ends
 
-WHAT IT DOES:
-1. Goes through entire linked list
-2. Frees each MemoryBlock
-3. Prevents memory leaks
-
-WHY IS THIS IMPORTANT?
-When we use malloc(), we must use free() to release memory.
-If we don't, we have a "memory leak" - wasted memory that can't be reused.
-
 PARAMETERS:
 - mm: Pointer to MemoryManager
 
 RETURNS: Nothing (void)
-
-WHEN TO CALL:
-- Before program exits
-- When resetting memory
-- When switching to a new configuration
 */
 void freeMemoryManager(MemoryManager *mm);
 
@@ -295,14 +191,6 @@ ALGORITHM:
 3. Use the FIRST hole that is big enough
 4. Stop searching immediately
 
-ADVANTAGES:
-- Fastest algorithm (stops at first match)
-- Simple to implement
-
-DISADVANTAGES:
-- Creates small holes at the beginning
-- These small holes accumulate and waste space
-
 PARAMETERS:
 - mm: Pointer to MemoryManager
 - processID: Process requesting memory
@@ -311,11 +199,6 @@ PARAMETERS:
 RETURNS:
 - Starting address if successful
 - -1 if no suitable hole found
-
-EXAMPLE:
-Memory: [HOLE:50KB][HOLE:200KB][HOLE:100KB]
-Request: 80 KB
-Result: Uses second hole (200KB) - first one big enough
 */
 int firstFit(MemoryManager *mm, int processID, int size);
 
@@ -331,15 +214,6 @@ ALGORITHM:
 2. Find the SMALLEST hole that fits
 3. Use that hole
 
-ADVANTAGES:
-- Minimizes wasted space in each allocation
-- Good for memory utilization
-
-DISADVANTAGES:
-- Slower (must check all holes)
-- Creates many tiny holes over time
-- These tiny holes are often unusable
-
 PARAMETERS:
 - mm: Pointer to MemoryManager
 - processID: Process requesting memory
@@ -348,12 +222,6 @@ PARAMETERS:
 RETURNS:
 - Starting address if successful
 - -1 if no suitable hole found
-
-EXAMPLE:
-Memory: [HOLE:50KB][HOLE:200KB][HOLE:100KB]
-Request: 80 KB
-Result: Uses third hole (100KB) - smallest that fits
-Remaining: [HOLE:50KB][HOLE:200KB][P1:80KB][HOLE:20KB]
 */
 int bestFit(MemoryManager *mm, int processID, int size);
 
@@ -369,15 +237,6 @@ ALGORITHM:
 2. Find the LARGEST hole
 3. Use that hole
 
-ADVANTAGES:
-- Leaves larger remaining holes
-- Larger holes are more likely to be reusable
-
-DISADVANTAGES:
-- Slower (must check all holes)
-- Wastes the biggest holes first
-- May prevent large processes from allocating later
-
 PARAMETERS:
 - mm: Pointer to MemoryManager
 - processID: Process requesting memory
@@ -386,48 +245,263 @@ PARAMETERS:
 RETURNS:
 - Starting address if successful
 - -1 if no suitable hole found
-
-EXAMPLE:
-Memory: [HOLE:50KB][HOLE:200KB][HOLE:100KB]
-Request: 80 KB
-Result: Uses second hole (200KB) - largest
-Remaining: [HOLE:50KB][P1:80KB][HOLE:120KB][HOLE:100KB]
-Notice: Remaining hole (120KB) is still quite large and usable
 */
 int worstFit(MemoryManager *mm, int processID, int size);
 
 
 /*
 ================================================================================
-ALGORITHM COMPARISON SUMMARY
+DEFRAGMENTATION TECHNIQUES
 ================================================================================
-
-SCENARIO: Memory has holes of: 50 KB, 200 KB, 100 KB
-REQUEST: Allocate 80 KB
-
-FIRST FIT:
-- Checks: 50 KB (too small), 200 KB (fits!) → STOP
-- Uses: 200 KB hole
-- Speed: FASTEST ⚡⚡⚡
-- Result: [50KB][P:80KB][HOLE:120KB][100KB]
-
-BEST FIT:
-- Checks: ALL holes → 50KB (no), 200KB (yes), 100KB (yes, SMALLEST!)
-- Uses: 100 KB hole
-- Speed: SLOW 🐌
-- Result: [50KB][200KB][P:80KB][HOLE:20KB]
-
-WORST FIT:
-- Checks: ALL holes → 50KB (no), 200KB (LARGEST!), 100KB (yes)
-- Uses: 200 KB hole
-- Speed: SLOW 🐌
-- Result: [50KB][P:80KB][HOLE:120KB][100KB]
-
-WHICH IS BEST?
-- Speed: First Fit wins
-- Memory efficiency: Depends on workload
-- Generally: First Fit is most commonly used in real systems
+Functions to reduce external fragmentation:
+1. Compaction - slide processes to eliminate holes
+2. Buddy System - power-of-2 allocation with split/merge
 */
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: compact
+--------------------------------------------------------------------------------
+PURPOSE: Perform sliding compaction on memory
+
+WHAT IT DOES:
+1. Moves all allocated processes to the beginning of user memory
+2. Creates one large hole at the end
+3. Eliminates external fragmentation
+
+THINK OF IT LIKE:
+Imagine books on a shelf with gaps between them.
+Compaction slides all books to the left, creating one big space on the right.
+
+Before: [OS][P1][HOLE][P2][HOLE][P3][HOLE]
+After:  [OS][P1][P2][P3][    BIG HOLE    ]
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+- resultBuffer: Buffer to write JSON result into
+- bufferSize: Size of the result buffer
+
+RETURNS: 
+- 1 if compaction was performed
+- 0 if no processes to compact
+
+RESULT JSON FORMAT:
+{
+  "success": true,
+  "processesMovedCount": 2,
+  "totalBytesMoved": 200,
+  "fragmentationBefore": 25.0,
+  "fragmentationAfter": 0.0,
+  "holesBefore": 3,
+  "holesAfter": 1
+}
+*/
+int compact(MemoryManager *mm, char *resultBuffer, int bufferSize);
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: autoCompact
+--------------------------------------------------------------------------------
+PURPOSE: Automatically compact memory if fragmentation exceeds threshold
+
+WHAT IT DOES:
+1. Calculate current fragmentation
+2. If fragmentation > threshold → compact
+3. If fragmentation <= threshold → skip (return info message)
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+- threshold: Fragmentation % above which compaction triggers (e.g., 30)
+- resultBuffer: Buffer to write JSON result into
+- bufferSize: Size of the result buffer
+
+RETURNS:
+- 1 if compaction was performed
+- 0 if fragmentation was below threshold (skipped)
+*/
+int autoCompact(MemoryManager *mm, int threshold, char *resultBuffer, int bufferSize);
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: buddyAllocate
+--------------------------------------------------------------------------------
+PURPOSE: Allocate memory using the Buddy System
+
+ALGORITHM:
+1. Round requested size UP to the nearest power of 2
+2. Find a free block that is big enough
+3. If block is too big, SPLIT it into two "buddies" (half-size each)
+4. Keep splitting until we get the right size
+5. Allocate the block
+
+EXAMPLE:
+Request: 50 KB
+Rounded: 64 KB (next power of 2)
+If we have a 256 KB block:
+  Split → [128 KB][128 KB]
+  Split → [64 KB][64 KB][128 KB]
+  Allocate first 64 KB block → [P1:64KB][FREE:64KB][FREE:128KB]
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+- size: Requested size in KB
+- resultBuffer: Buffer for JSON result
+- bufferSize: Size of result buffer
+
+RETURNS:
+- Starting address if successful
+- -1 if no suitable block found
+*/
+int buddyAllocate(MemoryManager *mm, int size, char *resultBuffer, int bufferSize);
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: buddyDeallocate
+--------------------------------------------------------------------------------
+PURPOSE: Deallocate a process under buddy system and merge buddy pairs
+
+WHAT IT DOES:
+1. Find the process and mark it as free
+2. Check if its buddy is also free
+3. If yes → merge them back together (coalesce)
+4. Recursively check if the merged block's buddy is also free
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+- processID: Process to deallocate
+- resultBuffer: Buffer for JSON result
+- bufferSize: Size of result buffer
+
+RETURNS:
+- 1 if deallocation successful
+- 0 if process not found
+*/
+int buddyDeallocate(MemoryManager *mm, int processID, char *resultBuffer, int bufferSize);
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: convertToBuddySystem
+--------------------------------------------------------------------------------
+PURPOSE: Convert current memory layout to buddy system
+
+WHAT IT DOES:
+1. Save all current processes (their sizes)
+2. Reinitialize memory for buddy system (round to power of 2)
+3. Re-allocate each saved process using buddy allocation
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+- resultBuffer: Buffer for JSON result
+- bufferSize: Size of result buffer
+
+RETURNS:
+- 1 if conversion successful
+- 0 if conversion failed
+*/
+int convertToBuddySystem(MemoryManager *mm, char *resultBuffer, int bufferSize);
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: revertFromBuddySystem
+--------------------------------------------------------------------------------
+PURPOSE: Revert from buddy system back to standard allocation
+
+WHAT IT DOES:
+1. Save all current processes
+2. Reinitialize memory normally
+3. Re-allocate each process using standard first-fit
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+- resultBuffer: Buffer for JSON result
+- bufferSize: Size of result buffer
+
+RETURNS:
+- 1 if revert successful
+- 0 if revert failed
+*/
+int revertFromBuddySystem(MemoryManager *mm, char *resultBuffer, int bufferSize);
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: resetMemory
+--------------------------------------------------------------------------------
+PURPOSE: Reset memory to its initial state (like starting fresh)
+
+WHAT IT DOES:
+1. Free all memory blocks
+2. Reinitialize memory with same total/OS sizes
+3. Reset all counters and statistics
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+*/
+void resetMemory(MemoryManager *mm);
+
+
+/*
+================================================================================
+JSON / API HELPER FUNCTIONS
+================================================================================
+These functions produce JSON strings for the HTTP API responses
+*/
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: getStatsJSON
+--------------------------------------------------------------------------------
+PURPOSE: Generate a JSON string with all memory statistics
+
+OUTPUT FORMAT:
+{
+  "totalMemory": 1024,
+  "osMemory": 256,
+  "userMemory": 768,
+  "usedMemory": 400,
+  "freeMemory": 368,
+  "numProcesses": 3,
+  "numHoles": 2,
+  "fragmentation": 15.5,
+  "totalAllocations": 5,
+  "totalDeallocations": 2,
+  "totalCompactions": 1,
+  "useBuddySystem": false
+}
+
+PARAMETERS:
+- mm: Pointer to MemoryManager
+- buffer: Output buffer for the JSON string
+- bufferSize: Size of the output buffer
+*/
+void getStatsJSON(MemoryManager *mm, char *buffer, int bufferSize);
+
+
+/*
+--------------------------------------------------------------------------------
+FUNCTION: nextPowerOf2
+--------------------------------------------------------------------------------
+PURPOSE: Round a number up to the next power of 2
+
+EXAMPLES:
+  nextPowerOf2(50) → 64
+  nextPowerOf2(64) → 64
+  nextPowerOf2(100) → 128
+  nextPowerOf2(1) → 1
+
+PARAMETERS:
+- n: The number to round up
+
+RETURNS: Next power of 2 >= n
+*/
+int nextPowerOf2(int n);
 
 
 // End of header guard
@@ -439,19 +513,27 @@ END OF FILE: memory_manager.h
 ================================================================================
 
 WHAT WE DECLARED:
-1. AllocationAlgorithm enum (FIRST_FIT, BEST_FIT, WORST_FIT)
-2. initializeMemory() - Set up memory system
-3. allocateMemory() - Main allocation function
-4. deallocateMemory() - Free memory
-5. displayMemory() - Show memory state
-6. calculateFragmentation() - Measure fragmentation
-7. freeMemoryManager() - Clean up
-8. firstFit() - First Fit algorithm
-9. bestFit() - Best Fit algorithm
+1.  AllocationAlgorithm enum (FIRST_FIT, BEST_FIT, WORST_FIT)
+2.  initializeMemory() - Set up memory system
+3.  allocateMemory() - Main allocation function (wrapper)
+4.  deallocateMemory() - Free memory with hole merging
+5.  displayMemory() - Show memory state
+6.  calculateFragmentation() - Measure fragmentation
+7.  freeMemoryManager() - Clean up
+8.  firstFit() - First Fit algorithm
+9.  bestFit() - Best Fit algorithm
 10. worstFit() - Worst Fit algorithm
+11. compact() - Sliding compaction
+12. autoCompact() - Auto-compact based on threshold
+13. buddyAllocate() - Buddy system allocation
+14. buddyDeallocate() - Buddy system deallocation
+15. convertToBuddySystem() - Switch to buddy system
+16. revertFromBuddySystem() - Switch back to standard
+17. resetMemory() - Reset to initial state
+18. getStatsJSON() - Memory stats as JSON
+19. nextPowerOf2() - Helper for buddy system
 
 NEXT FILE: src/memory_manager.c
-This will be the BIGGEST and most important file!
-It implements all these algorithms with the actual logic.
+This will implement all these functions!
 ================================================================================
 */
