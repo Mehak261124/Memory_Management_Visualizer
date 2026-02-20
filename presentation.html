@@ -223,9 +223,10 @@ button {
 <section class="slide">
   <div class="header">Problem Relevance</div>
   <div class="points">
-    <div class="point"><div class="bullet">▸</div>Memory Management is a <span class="green">core OS responsibility</span></div>
-    <div class="point"><div class="bullet">▸</div>Dynamic partitioning suffers from <span class="cyan">external fragmentation</span></div>
-    <div class="point"><div class="bullet">▸</div>Understanding allocation strategies improves <span class="magenta">system efficiency</span></div>
+    <div class="point"><div class="bullet">▸</div>Memory Management is a <span class="green">core OS function</span>that directly affects CPU utilization</div>
+    <div class="point"><div class="bullet">▸</div>Poor memory allocation leads to <span class="cyan">external fragmentation and wasted memory</span></div>
+    <div class="point"><div class="bullet">▸</div>Dynamic partitioning requires <span class="magenta">efficient algorithms</span>to allocate contiguous memory</div>
+    <div class="point"><div class="bullet">▸</div>Visualizing allocation strategies helps <span class="green">analyze fragmentation and system performance</span></div>
   </div>
 </section>
 
@@ -233,9 +234,9 @@ button {
 <section class="slide">
   <div class="header">Algorithms Used</div>
   <div class="points">
-    <div class="point"><div class="bullet">▸</div><span class="cyan">First Fit</span> – fastest allocation, higher fragmentation</div>
-    <div class="point"><div class="bullet">▸</div><span class="magenta">Best Fit</span> – minimal waste, many small holes</div>
-    <div class="point"><div class="bullet">▸</div><span class="green">Worst Fit</span> – leaves large holes for future use</div>
+    <div class="point"><div class="bullet">▸</div><span class="cyan">First Fit</span> – Allocates the first available block; <b>fast but causes higher fragmentation</b></div>
+    <div class="point"><div class="bullet">▸</div><span class="magenta">Best Fit</span> – Chooses the smallest suitable block; <b>reduces waste but creates small holes</b></div>
+    <div class="point"><div class="bullet">▸</div><span class="green">Worst Fit</span> – Uses the largest free block; <b>preserves larger spaces for future requests</b></div>
   </div>
 </section>
 
@@ -243,9 +244,9 @@ button {
 <section class="slide">
   <div class="header">OS Concepts Covered</div>
   <div class="points">
-    <div class="point"><div class="bullet">▸</div>Dynamic memory partitioning</div>
-    <div class="point"><div class="bullet">▸</div>External fragmentation calculation</div>
-    <div class="point"><div class="bullet">▸</div>Hole coalescing on deallocation</div>
+    <div class="point"><div class="bullet">▸</div>Dynamic allocation of variable-sized memory partitions</div>
+    <div class="point"><div class="bullet">▸</div>Measurement and impact of external fragmentation</div>
+    <div class="point"><div class="bullet">▸</div>Merging adjacent free holes on memory deallocation</div>
   </div>
 </section>
 

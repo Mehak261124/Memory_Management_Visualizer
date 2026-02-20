@@ -33,17 +33,21 @@ export function DeallocateModal({
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedProcess) {
       alert('Please select a process');
       return;
     }
     
-    const result = onDeallocate(selectedProcess);
-    if (result.success) {
-      onClose();
-    } else {
-      alert(result.message);
+    try {
+      const result = await onDeallocate(selectedProcess);
+      if (result && result.success) {
+        onClose();
+      } else if (result) {
+        alert(result.message);
+      }
+    } catch (err) {
+      alert('Failed to deallocate. Is the C backend running?');
     }
   };
 

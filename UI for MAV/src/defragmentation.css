@@ -1,0 +1,601 @@
+/**
+ * DEFRAGMENTATION STYLES
+ * Add these to your main App.css or styles.css
+ */
+
+/* ============================================
+   COMPACTION MODAL STYLES
+   ============================================ */
+
+.compaction-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.compaction-info h4 {
+  color: var(--cyan);
+  margin-bottom: 12px;
+  font-size: 1.1em;
+}
+
+.compaction-info p {
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.current-status {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-label {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.status-value {
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.status-value.success { color: var(--green); }
+.status-value.warning { color: var(--yellow); }
+.status-value.danger { color: var(--red); }
+
+/* Compaction Options */
+.compaction-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.option-card {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.3s;
+}
+
+.option-card:has(input:checked) {
+  border-color: var(--cyan);
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.option-label {
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.option-label input[type="radio"] {
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-content strong {
+  display: block;
+  color: var(--cyan);
+  margin-bottom: 6px;
+}
+
+.option-content p {
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+}
+
+/* Diagram Styles */
+.option-diagram {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.diagram-before,
+.diagram-after {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.diagram-arrow {
+  text-align: center;
+  color: var(--cyan);
+  font-size: 1.2em;
+  margin: 4px 0;
+}
+
+.block {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.block.alloc {
+  background: var(--magenta);
+  color: white;
+}
+
+.block.free {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Threshold Control */
+.threshold-control {
+  margin-top: 12px;
+}
+
+.threshold-control label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.threshold-control input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Compaction Warning */
+.compaction-warning {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 6px;
+}
+
+.warning-icon {
+  font-size: 1.5em;
+}
+
+.warning-content strong {
+  color: var(--yellow);
+}
+
+/* Compaction Result */
+.compaction-result {
+  text-align: center;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.result-icon {
+  font-size: 3em;
+  color: var(--green);
+}
+
+.result-header h4 {
+  font-size: 1.5em;
+  color: var(--green);
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.result-stat {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-stat .stat-label {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.result-stat .stat-value {
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+.result-summary {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.success-message {
+  color: var(--green);
+  font-weight: 500;
+}
+
+/* ============================================
+   BUDDY SYSTEM MODAL STYLES
+   ============================================ */
+
+.buddy-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.buddy-info h4 {
+  color: var(--green);
+  margin-bottom: 12px;
+}
+
+.buddy-info ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.buddy-info li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.buddy-status {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Buddy Tree Visualization */
+.buddy-tree {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.tree-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 0.9em;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-item .box {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.legend-item .box.free {
+  background: rgba(76, 175, 80, 0.3);
+  border: 1px solid var(--green);
+}
+
+.legend-item .box.allocated {
+  background: var(--magenta);
+}
+
+.legend-item .box.split {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.tree-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tree-level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.level-label {
+  min-width: 60px;
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.level-blocks {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.buddy-block {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.buddy-block.free {
+  background: rgba(76, 175, 80, 0.3);
+  border: 1px solid var(--green);
+}
+
+.buddy-block.allocated {
+  background: var(--magenta);
+  border: 1px solid var(--magenta);
+}
+
+.buddy-block.split {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.buddy-block:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.2);
+}
+
+/* Buddy Stats */
+.buddy-stats {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.buddy-stats h4 {
+  color: var(--green);
+  margin-bottom: 12px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-box .stat-label {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.stat-box .stat-value {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: var(--green);
+}
+
+/* Buddy Example */
+.buddy-example {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.buddy-example h4 {
+  color: var(--green);
+  margin-bottom: 16px;
+}
+
+.example-step {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.example-step:last-child {
+  border-bottom: none;
+}
+
+.step-header {
+  font-weight: 600;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+
+.step-visual {
+  margin: 12px 0;
+}
+
+.split-demo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.buddy-demo-block {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.buddy-demo-block.free {
+  background: rgba(76, 175, 80, 0.3);
+  border: 1px solid var(--green);
+}
+
+.buddy-demo-block.allocated {
+  background: var(--magenta);
+  border: 1px solid var(--magenta);
+}
+
+.arrow {
+  color: var(--cyan);
+  font-size: 1.2em;
+}
+
+.result {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.note {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  margin-top: 8px;
+}
+
+/* Buddy Comparison Table */
+.buddy-comparison {
+  margin-top: 24px;
+}
+
+.buddy-comparison h4 {
+  color: var(--green);
+  margin-bottom: 12px;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-table th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  color: var(--cyan);
+}
+
+.comparison-table td.success {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* ============================================
+   CONTROLS PANEL UPDATES
+   ============================================ */
+
+.defrag-section {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.defrag-info {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.info-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.info-value {
+  font-weight: 600;
+}
+
+.info-value.success { color: var(--green); }
+.info-value.warning { color: var(--yellow); }
+.info-value.danger { color: var(--red); }
+
+.frag-alert {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  animation: alertPulse 2s infinite;
+}
+
+@keyframes alertPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.alert-icon {
+  font-size: 1.5em;
+}
+
+.alert-content strong {
+  color: var(--red);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.alert-content p {
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.7);
+}

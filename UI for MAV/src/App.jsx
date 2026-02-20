@@ -23,9 +23,13 @@ import { DeallocateModal } from './components/modals/DeallocateModal';
 import { AnalysisModal } from './components/modals/AnalysisModal';
 import { DisplayModal } from './components/modals/DisplayModal';
 import { ExitModal } from './components/modals/ExitModal';
+import { Modal } from './components/modals/Modal';
 import { ComparisonModal } from './components/modals/ComparisonModal';
+import { BuddySystemModal } from './components/modals/BuddysystemModal';
+import { CompactionModal } from './components/modals/CompactionModal';
 
 import './index.css';
+import './defragmentation.css';
 
 // Presets data
 const PRESETS = {
@@ -104,7 +108,13 @@ function App() {
     reset,
     restoreState,
     getFreeBlocks,
-    getAllocatedBlocks
+    getAllocatedBlocks,
+    refresh,
+    setBuddySystem,
+    compact,
+    autoCompact,
+    convertToBuddySystem,
+    revertFromBuddySystem
   } = useMemoryManager();
 
   // UI State
@@ -118,7 +128,10 @@ function App() {
   const [analysisModal, setAnalysisModal] = useState(false);
   const [displayModal, setDisplayModal] = useState(false);
   const [exitModal, setExitModal] = useState(false);
+  const [resetModal, setResetModal] = useState(false);
   const [comparisonModal, setComparisonModal] = useState(false);
+  const [compactionModal, setCompactionModal] = useState(false);
+  const [buddySystemModal, setBuddySystemModal] = useState(false);
 
   // Handlers
   const handleZoomIn = useCallback(() => {
@@ -137,32 +150,35 @@ function App() {
     setSelectedBlock(block);
   }, []);
 
-  const handlePreset = useCallback((presetId) => {
-    reset();
+  const handlePreset = useCallback(async (presetId) => {
+    await reset();
     const operations = presetId === 'random' ? generateRandomPreset() : PRESETS[presetId];
     
-    operations.forEach(op => {
+    for (const op of operations) {
       if (op.deallocate) {
-        deallocate(op.deallocate);
+        await deallocate(op.deallocate);
       } else {
-        allocate(op.size, op.name, op.algo);
+        await allocate(op.size, op.name, op.algo);
       }
-    });
+    }
   }, [reset, allocate, deallocate]);
 
   const handleReset = useCallback(() => {
-    if (window.confirm('Are you sure you want to reset all memory? This will clear all allocations.')) {
-      reset();
-    }
+    setResetModal(true);
+  }, []);
+
+  const confirmReset = useCallback(async () => {
+    setResetModal(false);
+    await reset();
   }, [reset]);
 
   const handleExit = useCallback(() => {
     setIsExited(true);
   }, []);
 
-  const handleRestart = useCallback(() => {
+  const handleRestart = useCallback(async () => {
     setIsExited(false);
-    reset();
+    await reset();
   }, [reset]);
 
   // Exit screen
@@ -204,6 +220,9 @@ function App() {
             onReset={handleReset}
             onExit={() => setExitModal(true)}
             onPreset={handlePreset}
+            onCompaction={() => setCompactionModal(true)}
+            onBuddySystem={() => setBuddySystemModal(true)}
+            stats={stats}
           />
 
           <VisualizationArea
@@ -265,10 +284,43 @@ function App() {
         onConfirm={handleExit}
       />
 
+      <Modal
+        isOpen={resetModal}
+        onClose={() => setResetModal(false)}
+        title="⚠ Reset Memory"
+        headerClass="warning"
+        footer={
+          <>
+            <button className="modal-btn cancel" onClick={() => setResetModal(false)}>Cancel</button>
+            <button className="modal-btn confirm danger" onClick={confirmReset}>Reset All</button>
+          </>
+        }
+      >
+        <p className="warning-message">Are you sure you want to reset all memory?</p>
+        <p className="warning-sub">This will clear all allocations and restore the initial state.</p>
+      </Modal>
+
       <ComparisonModal
         isOpen={comparisonModal}
         onClose={() => setComparisonModal(false)}
         manager={manager}
+      />
+      <CompactionModal
+        isOpen={compactionModal}
+        onClose={() => setCompactionModal(false)}
+        manager={manager}
+        onCompact={compact}
+        onAutoCompact={autoCompact}
+      />
+
+      <BuddySystemModal
+        isOpen={buddySystemModal}
+        onClose={() => setBuddySystemModal(false)}
+        manager={manager}
+        onToggle={setBuddySystem}
+        onConvert={convertToBuddySystem}
+        onRevert={revertFromBuddySystem}
+        refresh={refresh}
       />
     </div>
   );

@@ -15,16 +15,19 @@ export function Timeline({ history, currentIndex, onStepClick, onScrub }) {
       </div>
       <div className="timeline-track">
         <div className="timeline-marker current" />
-        {history.map((state, index) => (
-          <div
-            key={index}
-            className={`timeline-step ${state.action.includes('Allocated') ? 'allocate' : 'deallocate'} ${index === history.length - 1 ? 'active' : ''}`}
-            title={state.action}
-            onClick={() => onStepClick(index)}
-          >
-            {index + 1}
-          </div>
-        ))}
+        {history.map((state, index) => {
+          const actionText = state.action || state.label || `Step ${index + 1}`;
+          return (
+            <div
+              key={index}
+              className={`timeline-step ${actionText.includes('Allocated') || actionText.includes('allocat') ? 'allocate' : 'deallocate'} ${index === history.length - 1 ? 'active' : ''}`}
+              title={actionText}
+              onClick={() => onStepClick(index)}
+            >
+              {index + 1}
+            </div>
+          );
+        })}
       </div>
       <div className="timeline-scrubber">
         <input

@@ -1,6 +1,6 @@
 /**
- * ControlsPanel Component
- * Left sidebar with algorithm buttons, operation buttons, and presets
+ * UPDATED ControlsPanel Component
+ * Added defragmentation controls
  */
 
 import React from 'react';
@@ -23,14 +23,32 @@ export function ControlsPanel({
   onCompare,
   onReset,
   onExit,
-  onPreset
+  onPreset,
+  // NEW: Defragmentation handlers
+  onCompaction,
+  onBuddySystem,
+  stats
 }) {
+  // Show warning if high fragmentation
+  const showFragWarning = parseFloat(stats?.fragmentation || 0) > 30;
+
   return (
     <aside className="controls-panel">
       <div className="panel-header">
         <span className="panel-icon">◆</span>
         <h2>Control Hub</h2>
       </div>
+
+      {/* NEW: Fragmentation Warning */}
+      {showFragWarning && (
+        <div className="frag-alert">
+          <span className="alert-icon">⚠️</span>
+          <div className="alert-content">
+            <strong>High Fragmentation!</strong>
+            <p>Consider running compaction</p>
+          </div>
+        </div>
+      )}
 
       <div className="controls-group">
         <h3 className="group-title">Allocation Algorithms</h3>
@@ -58,6 +76,39 @@ export function ControlsPanel({
           description="Uses largest hole"
           onClick={onWorstFit}
         />
+      </div>
+
+      {/* NEW: Defragmentation Section */}
+      <div className="controls-group defrag-section">
+        <h3 className="group-title">🔧 Defragmentation</h3>
+        
+        <NeonButton
+          color="yellow"
+          icon="⚡"
+          text="Memory Compaction"
+          description="Eliminate fragmentation"
+          onClick={onCompaction}
+        />
+        
+        <NeonButton
+          color="green"
+          icon="◐"
+          text="Buddy System"
+          description="Power-of-2 allocation"
+          onClick={onBuddySystem}
+        />
+
+        <div className="defrag-info">
+          <div className="info-row">
+            <span className="info-label">Current Fragmentation:</span>
+            <span className={`info-value ${
+              parseFloat(stats?.fragmentation || 0) > 30 ? 'danger' :
+              parseFloat(stats?.fragmentation || 0) > 15 ? 'warning' : 'success'
+            }`}>
+              {stats?.fragmentation || 0}%
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="controls-group">
