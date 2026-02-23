@@ -1,167 +1,224 @@
-# Memory Allocation Visualizer
+# NeonHeap: Memory Allocation Visualizer
 
-A text-based interactive simulator demonstrating dynamic contiguous memory allocation algorithms in Operating Systems.
+A full-stack Operating Systems project with a **C backend** and **React (Vite) frontend** that visualizes dynamic memory allocation algorithms and real OS process activity through an interactive cyberpunk-themed city skyline interface.
+
+---
 
 ## 🎯 Overview
 
-The Memory Allocation Visualizer is an Operating Systems–oriented project that simulates how memory is allocated and managed using dynamic partitioning.
-It helps users understand how different allocation strategies affect memory utilization, fragmentation, and allocation success.
+NeonHeap is a Memory Allocation Visualizer designed to make core OS memory management concepts tangible and interactive. It supports **two modes**:
 
-This project focuses on concept clarity, correctness, and explainability.
+| Mode | Purpose |
+|------|---------|
+| **Educational Mode** | Simulate First Fit, Best Fit, Worst Fit, compaction, and buddy system with a visual city skyline |
+| **Live System Mode** | Visualize the top 10 real OS processes as buildings, inspect any process on click, and monitor system-wide memory pressure |
 
-## 🎯 Objectives
+The C backend uses real OS system calls (`mmap`, `proc_pidinfo`, `sysctl`) to back the simulation with actual memory and process data. The React frontend renders everything as a cyberpunk neon city skyline.
 
-- Simulate dynamic memory allocation in operating systems
-- Implement and compare:
-  - First Fit
-  - Best Fit
-  - Worst Fit algorithms
-- Demonstrate external fragmentation
-- Visualize memory layout in a clear, textual form
-- Provide an interactive environment for experimentation
+---
 
 ## ✨ Features
 
-- ✅ **Three Allocation Algorithms:**
-  - First Fit
-  - Best Fit
-  - Worst Fit
+### Educational Mode
+- **Allocation Algorithms:** First Fit, Best Fit, Worst Fit
+- **Deallocation** with automatic adjacent-hole merging
+- **Memory Compaction** (defragmentation)
+- **Buddy System** — convert/revert with visual buddy tree
+- **Algorithm Comparison** — side-by-side under identical workloads
+- **Fragmentation Analysis** — real-time external fragmentation percentage
+- **Timeline & History** — step-by-step scrubbing through past operations
+- **Preset Scenarios** — Small, Medium, Heavy, Random workloads
 
-- ✅ **Interactive Operations:**
-  - Allocate memory to processes
-  - Deallocate processes with hole merging
-  - Display current memory layout
-  - Calculate external fragmentation
-  - Compare algorithms under identical conditions
-  - Reset memory state
+### Live System Mode
+- **Live Process Skyline** — top 10 real OS processes as buildings (height ∝ RSS)
+- **Process Detail on Click** — modal with threads, page faults, pageins, COW faults, executable path, start time
+- **Memory Pressure Indicator** — system-wide RAM usage bar (LOW / MODERATE / HIGH / CRITICAL)
+- **Auto-polling** — refreshes every 3 seconds
+- **Permission Warning** — prompts to use `sudo` for full visibility
 
-- ✅ **Visual Feedback:**
-  - Text-based memory visualization
-  - ASCII art representation
-  - Detailed statistics (free memory, holes, utilization)
+### Visual Design
+- Cyberpunk neon dark theme with glassmorphism
+- Ambient particles + scanline overlays
+- Smooth building rise/pulse animations
+- Responsive layout (desktop → mobile)
 
-## 🛠️ Technical Specifications
+---
 
-### Technologies Used
-- **Language:** C
-- **Compiler:** GCC (GNU Compiler Collection)
-- **Platform:** Cross-platform (Mac, Linux, Windows)
-- **Architecture:** Modular design with header files
+## 🏗️ Architecture
 
-### Project Structure
 ```
-MemoryAllocationVisualizer/
+┌─────────────────────────────────────────────────────┐
+│                React Frontend (Vite)                │
+│  Components: CityViewport, LiveCityViewport,        │
+│  ProcessDetailModal, MemoryPressureBar, etc.        │
+│  Hooks: useMemoryManager, useLiveProcesses          │
+├─────────────────────────────────────────────────────┤
+│               HTTP JSON API (Port 8080)             │
+├─────────────────────────────────────────────────────┤
+│                   C Backend                         │
+│  memory_manager.c  — allocation algorithms          │
+│  memory_structures.c — linked list, buddy tree      │
+│  os_memory.c — mmap/munmap, sysctl, sysconf         │
+│  proc_reader.c — real process scanning              │
+│  http_server.c — POSIX socket HTTP server           │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 Project Structure
+
+```
+Memory_Management_Visualizer/
 ├── include/
-│   ├── memory_structures.h    # Data structure definitions
-│   └── memory_manager.h       # Function declarations
+│   ├── memory_manager.h       # Allocation/deallocation API
+│   ├── memory_structures.h    # MemoryBlock, BuddyNode structs
+│   ├── os_memory.h            # mmap/munmap, sysctl wrappers
+│   ├── proc_reader.h          # Process scanning API
+│   └── http_server.h          # HTTP server API
 ├── src/
-│   ├── memory_structures.c    # Structure implementations
-│   ├── memory_manager.c       # Algorithm implementations
-│   └── main.c                 # Main program
+│   ├── main.c                 # Entry point (menu + server modes)
+│   ├── memory_manager.c       # First/Best/Worst Fit, compaction, buddy
+│   ├── memory_structures.c    # Linked list operations
+│   ├── os_memory.c            # Real OS memory via mmap
+│   ├── proc_reader.c          # Process list, detail, memory pressure
+│   └── http_server.c          # POSIX socket HTTP + JSON API
+├── UI for MAV/                # React + Vite frontend
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   ├── api/
+│   │   │   ├── getProcesses.js
+│   │   │   ├── getProcessDetail.js
+│   │   │   └── getMemoryPressure.js
+│   │   ├── hooks/
+│   │   │   ├── useMemoryManager.js
+│   │   │   └── useLiveProcesses.js
+│   │   └── components/
+│   │       ├── LiveCityViewport.jsx
+│   │       ├── LiveProcessBlock.jsx
+│   │       ├── ProcessDetailModal.jsx
+│   │       ├── MemoryPressureBar.jsx
+│   │       ├── layout/
+│   │       ├── modals/
+│   │       ├── visualization/
+│   │       └── ...
+│   └── package.json
 ├── build/
-│   └── memory_visualizer      # Compiled executable
+│   └── memory_visualizer      # Compiled backend binary
 ├── docs/
-│   └── project_report.pdf     # Documentation
-└── README.md                  # This file
+│   ├── README.md              # This file
+│   └── project_report.pdf
+└── presentation.html
 ```
 
-## 📦 Installation & Compilation
+---
+
+## 📦 Installation & Usage
 
 ### Prerequisites
-- GCC compiler installed
-- Terminal/Command Line access
+- **GCC** compiler (Xcode CLI tools on macOS, `build-essential` on Linux)
+- **Node.js** ≥ 18 and **npm**
 
-### Compilation Steps
+### 1. Compile the C Backend
 
-1. **Clone the project:**
 ```bash
-cd /path/to/MemoryAllocationVisualizer
+cd Memory_Management_Visualizer
+gcc src/*.c -I include -o build/memory_visualizer -framework CoreFoundation
 ```
 
-2. **Compile the project:**
+> On Linux, omit `-framework CoreFoundation`:
+> ```bash
+> gcc src/*.c -I include -o build/memory_visualizer
+> ```
+
+### 2. Start the Backend Server
+
 ```bash
-gcc -o build/memory_visualizer src/main.c src/memory_manager.c src/memory_structures.c -I include
+./build/memory_visualizer --server 8080
 ```
 
-3. **Run the program:**
+The server will display all available API endpoints and listen on `http://localhost:8080`.
+
+### 3. Start the React Frontend
+
+```bash
+cd "UI for MAV"
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+### 4. Interactive Text Mode (Optional)
+
 ```bash
 ./build/memory_visualizer
 ```
 
-### Alternative Compilation (Windows)
-```cmd
-gcc -o build\memory_visualizer.exe src\main.c src\memory_manager.c src\memory_structures.c -I include
-build\memory_visualizer.exe
-```
+Runs a terminal-based menu for direct interaction without the React frontend.
 
-## 🎮 How to Use
+---
 
-### Main Menu Options
+## 🔌 API Endpoints
 
-1. **Allocate Memory (First Fit)** - Uses first suitable hole
-2. **Allocate Memory (Best Fit)** - Uses smallest suitable hole
-3. **Allocate Memory (Worst Fit)** - Uses largest hole
-4. **Deallocate Process** - Free memory and merge holes
-5. **Display Memory State** - Show current memory layout
-6. **Show Fragmentation Analysis** - Calculate fragmentation percentage
-7. **Compare All Algorithms** - Run all algorithms with test data
-8. **Reset Memory** - Clear all processes and restart
-9. **Exit** - Quit the program
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/status` | Health check |
+| `GET` | `/api/blocks` | All memory blocks (educational) |
+| `GET` | `/api/stats` | Memory statistics |
+| `GET` | `/api/sysinfo` | OS system info (page size, RAM) |
+| `POST` | `/api/allocate` | Allocate memory `{size, algorithm}` |
+| `POST` | `/api/deallocate` | Free process `{processId}` |
+| `POST` | `/api/compact` | Run compaction |
+| `POST` | `/api/autocompact` | Auto-compact `{threshold}` |
+| `POST` | `/api/buddy/convert` | Enable buddy system |
+| `POST` | `/api/buddy/revert` | Revert to normal |
+| `POST` | `/api/reset` | Reset memory |
+| `GET` | `/api/processes/top` | Top 10 real OS processes |
+| `GET` | `/api/process/<pid>` | Extended detail for single PID |
+| `GET` | `/api/memory/pressure` | System-wide memory pressure |
 
-### Example Usage
-```
-Enter choice: 1
-Enter process size (KB): 200
-✓ Process P1 (200 KB) allocated at address 256
-
-Memory: [OS][P1][==========]
-```
+---
 
 ## 🧮 Algorithms Implemented
 
-### 1. First Fit Algorithm
-- **Strategy:** Allocate to first hole that fits
-- **Advantage:** Fastest
-- **Disadvantage:** Can cause fragmentation near the beginning of memory
+| Algorithm | Strategy | Time Complexity | Fragmentation |
+|-----------|----------|----------------|---------------|
+| **First Fit** | First hole that fits | O(n) | Moderate |
+| **Best Fit** | Smallest sufficient hole | O(n) | Creates tiny holes |
+| **Worst Fit** | Largest available hole | O(n) | Wastes large holes |
+| **Compaction** | Slide all processes to one end | O(n) | Eliminates external frag. |
+| **Buddy System** | Power-of-2 splits/merges | O(log n) | Internal fragmentation |
 
-### 2. Best Fit Algorithm
-- **Strategy:** Allocate to smallest hole that fits
-- **Advantage:** Minimizes wasted space
-- **Disadvantage:** Creates many tiny unusable holes
+---
 
-### 3. Worst Fit Algorithm
-- **Strategy:** Allocate to largest available hole
-- **Advantage:** Leaves larger reusable holes
-- **Disadvantage:** Wastes largest holes first
+## 🛠️ Technical Stack
 
-## 📊 Key Concepts Demonstrated
+| Layer | Technology |
+|-------|-----------|
+| **Backend Language** | C (C11) |
+| **OS APIs (macOS)** | `libproc` (`proc_pidinfo`, `proc_listallpids`), `sysctl`, `mmap`/`munmap` |
+| **OS APIs (Linux)** | `/proc` filesystem, `sysconf`, `readlink` |
+| **Networking** | POSIX sockets (single-threaded HTTP) |
+| **Frontend** | React 18 + Vite |
+| **Styling** | Vanilla CSS (cyberpunk neon theme) |
+| **Platform** | macOS (primary), Linux (via `#ifdef`) |
 
-### Dynamic Partitioning
-Memory is allocated in variable-sized blocks based on process requirements.
+---
 
-### External Fragmentation
-Free memory scattered in small non-contiguous blocks that cannot be effectively used.
+## 📊 Key OS Concepts Demonstrated
 
-**Formula:**
-```
-Fragmentation % = (Total Free Memory - Largest Hole) / User Memory × 100
-```
+- **Dynamic Partitioning** — variable-sized allocation from a contiguous pool
+- **External Fragmentation** — scattered free holes; formula: `(TotalFree − LargestHole) / UserMemory × 100`
+- **Hole Merging** — adjacent free blocks coalesce on deallocation
+- **Memory Compaction** — relocate all processes to eliminate fragmentation
+- **Buddy System** — power-of-2 splitting/coalescing for efficient allocation
+- **Virtual Memory** — `mmap()`/`munmap()` for real OS-backed memory regions
+- **Process Introspection** — reading live kernel process data via system APIs
+- **Memory Pressure** — system-wide RAM utilization monitoring
+---
 
-### Hole Merging
-When adjacent holes are merged into one larger hole during deallocation to prevent fragmentation.
+## 📄 License
 
-## 🐛 Known Issues
-
-- Comparison mode uses simple workloads (single-hole scenarios)
-- Input validation can be further strengthened
-- Maximum memory size is fixed at 1024 KB (can be modified in code)
-
-## 🔮 Future Enhancements (Phase 2)
-
-- [ ] Graphical UI (Web or Desktop)
-- [ ] Step-by-step animated allocation
-- [ ] Compaction support
-- [ ] Fragmentation graphs over time
-- [ ] Realistic workload simulation
-- [ ] Export results (CSV / JSON)
-- [ ] Paging and segmentation support
+This project is developed for academic purposes as part of an Operating Systems course.

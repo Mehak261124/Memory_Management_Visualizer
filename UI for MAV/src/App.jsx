@@ -5,6 +5,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useMemoryManager } from './hooks/useMemoryManager';
+import { useLiveProcesses } from './hooks/useLiveProcesses';
 import { CONFIG } from './config/constants';
 
 // Layout Components
@@ -117,6 +118,14 @@ function App() {
     revertFromBuddySystem
   } = useMemoryManager();
 
+  // Live System Mode
+  const [isLiveMode, setIsLiveMode] = useState(false);
+  const liveData = useLiveProcesses({ enabled: isLiveMode });
+  const { processes: liveProcesses, loading: liveLoading, error: liveError,
+          lastUpdated: liveLastUpdated, permissionWarning: livePermissionWarning,
+          pressure: livePressure } = liveData;
+  const toggleLiveMode = useCallback(() => setIsLiveMode(prev => !prev), []);
+
   // UI State
   const [zoomLevel, setZoomLevel] = useState(1);
   const [selectedBlock, setSelectedBlock] = useState(null);
@@ -206,24 +215,32 @@ function App() {
 
       {/* Main Container */}
       <div className="app-container">
-        <TopBar stats={stats} />
+        <TopBar
+          stats={stats}
+          isLiveMode={isLiveMode}
+          onToggleMode={toggleLiveMode}
+          liveProcessCount={liveData.processes.length}
+        />
 
         <div className="main-content">
-          <ControlsPanel
-            onFirstFit={() => setAllocationModal({ open: true, algorithm: 'firstFit' })}
-            onBestFit={() => setAllocationModal({ open: true, algorithm: 'bestFit' })}
-            onWorstFit={() => setAllocationModal({ open: true, algorithm: 'worstFit' })}
-            onDeallocate={() => setDeallocateModal(true)}
-            onDisplay={() => setDisplayModal(true)}
-            onAnalysis={() => setAnalysisModal(true)}
-            onCompare={() => setComparisonModal(true)}
-            onReset={handleReset}
-            onExit={() => setExitModal(true)}
-            onPreset={handlePreset}
-            onCompaction={() => setCompactionModal(true)}
-            onBuddySystem={() => setBuddySystemModal(true)}
-            stats={stats}
-          />
+          {/* Hide educational controls in Live Mode */}
+          {!isLiveMode && (
+            <ControlsPanel
+              onFirstFit={() => setAllocationModal({ open: true, algorithm: 'firstFit' })}
+              onBestFit={() => setAllocationModal({ open: true, algorithm: 'bestFit' })}
+              onWorstFit={() => setAllocationModal({ open: true, algorithm: 'worstFit' })}
+              onDeallocate={() => setDeallocateModal(true)}
+              onDisplay={() => setDisplayModal(true)}
+              onAnalysis={() => setAnalysisModal(true)}
+              onCompare={() => setComparisonModal(true)}
+              onReset={handleReset}
+              onExit={() => setExitModal(true)}
+              onPreset={handlePreset}
+              onCompaction={() => setCompactionModal(true)}
+              onBuddySystem={() => setBuddySystemModal(true)}
+              stats={stats}
+            />
+          )}
 
           <VisualizationArea
             blocks={blocks}
@@ -235,17 +252,26 @@ function App() {
             onResetView={handleResetView}
             selectedBlock={selectedBlock}
             onBlockClick={handleBlockClick}
+            isLiveMode={isLiveMode}
+            liveProcesses={liveProcesses}
+            liveLoading={liveLoading}
+            liveError={liveError}
+            livePermissionWarning={livePermissionWarning}
+            liveLastUpdated={liveLastUpdated}
+            livePressure={livePressure}
           />
 
-          <RightPanel stats={stats} />
+          {!isLiveMode && <RightPanel stats={stats} />}
         </div>
 
-        <BottomPanel
-          history={history}
-          stats={stats}
-          onStepClick={restoreState}
-          onScrub={restoreState}
-        />
+        {!isLiveMode && (
+          <BottomPanel
+            history={history}
+            stats={stats}
+            onStepClick={restoreState}
+            onScrub={restoreState}
+          />
+        )}
       </div>
 
       {/* Modals */}

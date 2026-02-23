@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeonHeap: Memory Allocation Visualizer — IEEE Report</title>
+<style>
+  /* IEEE-style formatting */
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Times New Roman', 'EB Garamond', Times, serif;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #000;
+    background: #fff;
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 0.75in 0.56in 1.69in 0.56in;
+  }
+
+  /* Title block — single column, centered */
+  .title-block {
+    text-align: center;
+    margin-bottom: 18pt;
+  }
+  .title-block h1 {
+    font-size: 24pt;
+    font-weight: 400;
+    margin-bottom: 12pt;
+    line-height: 1.2;
+  }
+  .author-name {
+    font-size: 11pt;
+    margin-bottom: 4pt;
+  }
+  .author-affiliation {
+    font-size: 10pt;
+    font-style: italic;
+    margin-bottom: 2pt;
+  }
+  .author-email {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9pt;
+  }
+
+  /* Abstract — single column */
+  .abstract-section {
+    margin: 18pt 0;
+  }
+  .abstract-section h2 {
+    font-size: 10pt;
+    font-weight: bold;
+    font-style: italic;
+    display: inline;
+  }
+  .abstract-section p {
+    text-align: justify;
+    text-indent: 0;
+    font-size: 9pt;
+    font-style: italic;
+  }
+  .keywords {
+    margin-top: 8pt;
+    font-size: 9pt;
+  }
+  .keywords strong {
+    font-style: italic;
+  }
+
+  /* Two-column layout */
+  .two-col {
+    column-count: 2;
+    column-gap: 0.3in;
+    text-align: justify;
+  }
+
+  /* Section headings */
+  h2.section-heading {
+    font-size: 10pt;
+    font-weight: bold;
+    font-variant: small-caps;
+    text-align: center;
+    margin-top: 14pt;
+    margin-bottom: 6pt;
+    break-after: avoid;
+  }
+  h3.subsection-heading {
+    font-size: 10pt;
+    font-style: italic;
+    margin-top: 10pt;
+    margin-bottom: 4pt;
+    break-after: avoid;
+  }
+
+  /* Body text */
+  p {
+    text-align: justify;
+    text-indent: 0.2in;
+    margin-bottom: 4pt;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+  p.no-indent {
+    text-indent: 0;
+  }
+
+  /* Tables */
+  .table-caption {
+    text-align: center;
+    font-size: 8pt;
+    font-variant: small-caps;
+    margin-bottom: 4pt;
+    font-weight: bold;
+    break-after: avoid;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10pt;
+    font-size: 9pt;
+    break-inside: avoid;
+  }
+  table th, table td {
+    border: 1px solid #000;
+    padding: 3pt 5pt;
+    text-align: left;
+  }
+  table th {
+    font-weight: bold;
+    background: #f0f0f0;
+  }
+
+  /* Figures */
+  .figure {
+    text-align: center;
+    margin: 10pt 0;
+    break-inside: avoid;
+  }
+  .figure-caption {
+    font-size: 8pt;
+    margin-top: 4pt;
+  }
+
+  /* Code / equations */
+  .equation {
+    text-align: center;
+    margin: 8pt 0;
+    font-style: italic;
+  }
+  code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9pt;
+  }
+  pre {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 8pt;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 6pt;
+    margin: 6pt 0;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    break-inside: avoid;
+  }
+
+  /* References */
+  .references {
+    font-size: 8pt;
+  }
+  .references p {
+    text-indent: 0;
+    padding-left: 20pt;
+    text-indent: -20pt;
+    margin-bottom: 3pt;
+    font-size: 8pt;
+  }
+
+  /* List */
+  ul, ol {
+    margin-left: 0.3in;
+    margin-bottom: 6pt;
+    font-size: 10pt;
+  }
+  li { margin-bottom: 2pt; }
+
+  /* Print */
+  @media print {
+    body { padding: 0; max-width: none; }
+    .two-col { column-count: 2; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================== TITLE BLOCK ======================== -->
+<div class="title-block">
+  <h1>NeonHeap: An Interactive Memory Allocation Visualizer with Live Operating System Process Monitoring</h1>
+  <div class="author-name">Mehak Jain, Anuj Kumar Singh</div>
+  <div class="author-affiliation">Rishihood University</div>
+  <div class="author-email">mehak.j23csai@nst.rishihood.edu.in, anuj.k23csai@nst.rishihood.edu.in</div>
+</div>
+
+<!-- ======================== ABSTRACT ======================== -->
+<div class="abstract-section">
+  <h2>Abstract—</h2>
+  <p>
+    This paper presents NeonHeap, a full-stack memory allocation visualizer that combines a C backend with a React frontend to demonstrate core operating systems concepts interactively. The system implements three contiguous memory allocation algorithms—First Fit, Best Fit, and Worst Fit—along with memory compaction and a buddy system allocator, all backed by real OS memory via <code>mmap()</code>. A unique Live System Mode allows users to observe real running processes on macOS and Linux, rendered as a cyberpunk city skyline where building height is proportional to resident memory. Two new features—process detail inspection on click and a system-wide memory pressure indicator—extend the live mode with data retrieved through platform-specific system calls (<code>proc_pidinfo</code> on macOS, <code>/proc</code> filesystem on Linux). The educational mode provides algorithm comparison, fragmentation analysis, and step-by-step timeline scrubbing. The C backend exposes a JSON API over POSIX sockets, enabling the React frontend to operate as a standalone client. Experimental results demonstrate the tool's effectiveness in illustrating how different allocation strategies affect fragmentation and memory utilization under varied workloads.
+  </p>
+  <div class="keywords">
+    <strong>Keywords—</strong> Memory Allocation, Operating Systems, First Fit, Best Fit, Worst Fit, Buddy System, Memory Compaction, Process Visualization, React, mmap
+  </div>
+</div>
+
+<!-- ======================== TWO-COLUMN CONTENT ======================== -->
+<div class="two-col">
+
+<!-- I. INTRODUCTION -->
+<h2 class="section-heading">I. Introduction</h2>
+
+<p>
+  Memory management is a fundamental responsibility of modern operating systems. The OS must allocate, track, and reclaim memory for dozens to thousands of concurrent processes while minimizing wasted space due to fragmentation. Despite its importance, memory management remains one of the most abstract topics for students, as the internal state of the memory allocator is typically invisible during normal system operation.
+</p>
+<p>
+  Existing educational tools often present allocation algorithms as static diagrams or command-line simulations that fail to convey the dynamic, real-time nature of memory management. Furthermore, few tools bridge the gap between simulated behavior and actual operating system activity by displaying live process data alongside educational simulations.
+</p>
+<p>
+  This paper presents NeonHeap, a Memory Allocation Visualizer that addresses these limitations through two key contributions:
+</p>
+<ul>
+  <li><strong>Educational Mode:</strong> An interactive simulation of First Fit, Best Fit, Worst Fit, compaction, and buddy system algorithms, with real-time visualization, algorithm comparison, and fragmentation analysis.</li>
+  <li><strong>Live System Mode:</strong> A real-time display of actual OS processes with process detail inspection and system-wide memory pressure monitoring, using platform-specific system calls.</li>
+</ul>
+<p>
+  The system uses a C backend that allocates real memory via <code>mmap()</code> and exposes a JSON API over POSIX sockets, consumed by a React frontend rendered as a cyberpunk-themed city skyline. This paper describes the architecture, algorithms, implementation, and results.
+</p>
+
+<!-- II. RELATED WORK -->
+<h2 class="section-heading">II. Related Work</h2>
+
+<p>
+  Several tools have been developed to teach memory management concepts. Stallings [1] provides comprehensive coverage of memory allocation algorithms in textbook form but lacks interactive visualization. The OS-Sim project [2] offers a command-line simulator for process scheduling and memory allocation but does not connect to real OS data. Web-based tools such as those described by Robbins [3] provide algorithm animations but are limited to predefined scenarios without live system integration.
+</p>
+<p>
+  The <code>top</code> and <code>htop</code> utilities [4] display real process information but do not visualize allocation algorithms or fragmentation concepts. Tools like Valgrind [5] focus on memory debugging rather than educational visualization of allocation strategies.
+</p>
+<p>
+  NeonHeap distinguishes itself by (a) combining simulated and real OS data in a single interface, (b) using actual <code>mmap()</code>-backed memory for the educational simulation, (c) providing platform-specific process introspection through <code>proc_pidinfo()</code> on macOS and the <code>/proc</code> filesystem on Linux, and (d) rendering the output as an engaging visual metaphor (city skyline) rather than tables or text.
+</p>
+
+<!-- III. METHODOLOGY -->
+<h2 class="section-heading">III. Methodology</h2>
+
+<h3 class="subsection-heading">A. System Architecture</h3>
+<p>
+  NeonHeap follows a client-server architecture. The C backend serves two roles: (i) a memory manager that maintains a linked list of allocated and free blocks backed by <code>mmap()</code>, and (ii) an HTTP server that exposes the memory state as JSON endpoints over POSIX sockets. The React frontend consumes these endpoints and renders the visualization.
+</p>
+
+<div class="table-caption">TABLE I<br>System Components</div>
+<table>
+  <tr><th>Component</th><th>Technology</th><th>Purpose</th></tr>
+  <tr><td>Memory Manager</td><td>C (linked list)</td><td>Allocation, deallocation, compaction, buddy system</td></tr>
+  <tr><td>OS Memory Layer</td><td>mmap/munmap, sysctl</td><td>Real virtual memory backing</td></tr>
+  <tr><td>Process Reader</td><td>libproc (macOS), /proc (Linux)</td><td>Live process scanning and detail</td></tr>
+  <tr><td>HTTP Server</td><td>POSIX sockets</td><td>JSON API for frontend</td></tr>
+  <tr><td>Frontend</td><td>React 18 + Vite</td><td>Interactive UI rendering</td></tr>
+</table>
+
+<h3 class="subsection-heading">B. Memory Allocation Algorithms</h3>
+<p>
+  The memory manager maintains a singly linked list of <code>MemoryBlock</code> structures. Each block stores a start address, size, process ID, and a boolean flag indicating whether it is a hole (free) or allocated. The three implemented algorithms scan this list differently:
+</p>
+<ul>
+  <li><strong>First Fit:</strong> Traverses the list and selects the first hole whose size ≥ requested size. Time complexity: O(n).</li>
+  <li><strong>Best Fit:</strong> Scans all holes and selects the smallest hole that fits. Minimizes leftover space but creates small unusable fragments. Time complexity: O(n).</li>
+  <li><strong>Worst Fit:</strong> Selects the largest available hole. Leaves larger remaining holes but depletes the biggest free regions first. Time complexity: O(n).</li>
+</ul>
+
+<h3 class="subsection-heading">C. Memory Compaction</h3>
+<p>
+  Compaction relocates all allocated blocks to one end of memory, coalescing all free space into a single large hole. This eliminates external fragmentation at the cost of moving processes in memory. The implementation slides each allocated block to the lowest available address and updates the linked list accordingly.
+</p>
+
+<h3 class="subsection-heading">D. Buddy System</h3>
+<p>
+  The buddy system divides memory into power-of-2 sized blocks. When a request arrives, the smallest power-of-2 block that fits is found. If no block of that size exists, a larger block is recursively split in half until the desired size is reached. On deallocation, the freed block is merged with its "buddy" (the adjacent block of the same size) if the buddy is also free. This approach trades internal fragmentation for efficient O(log n) allocation and deallocation.
+</p>
+
+<h3 class="subsection-heading">E. External Fragmentation Measurement</h3>
+<p>
+  External fragmentation is calculated using the formula:
+</p>
+<div class="equation">
+  Fragmentation (%) = (Total Free Memory − Largest Hole) / User Memory × 100 &nbsp;&nbsp;&nbsp;(1)
+</div>
+<p>
+  A fragmentation of 0% indicates all free memory is in one contiguous block. Higher values indicate scattered holes that may prevent allocation even when total free memory is sufficient.
+</p>
+
+<h3 class="subsection-heading">F. Live System Mode — Process Introspection</h3>
+<p>
+  On macOS, the process reader uses <code>proc_listallpids()</code> to enumerate all PIDs, then calls <code>proc_pidinfo(pid, PROC_PIDTASKALLINFO)</code> for each to obtain resident memory (RSS), virtual memory size, thread count, page faults, pageins, and copy-on-write faults. The executable path is retrieved via <code>proc_pidpath()</code>. On Linux, equivalent data is obtained by reading <code>/proc/&lt;pid&gt;/status</code>, <code>/proc/&lt;pid&gt;/stat</code>, and <code>/proc/&lt;pid&gt;/exe</code>.
+</p>
+
+<h3 class="subsection-heading">G. Memory Pressure Calculation</h3>
+<p>
+  System-wide memory pressure is computed as:
+</p>
+<div class="equation">
+  Used (%) = Σ RSS<sub>all processes</sub> / Total RAM × 100 &nbsp;&nbsp;&nbsp;(2)
+</div>
+<p>
+  On macOS, total RAM is obtained via <code>sysctl(HW_MEMSIZE)</code> and used RAM is the sum of RSS across all scanned processes. On Linux, <code>/proc/meminfo</code> provides <code>MemTotal</code> and <code>MemAvailable</code> directly. The pressure level is classified as: LOW (&lt;50%), MODERATE (50–70%), HIGH (70–85%), or CRITICAL (&gt;85%).
+</p>
+
+<!-- IV. RESULTS AND DISCUSSION -->
+<h2 class="section-heading">IV. Results and Discussion</h2>
+
+<h3 class="subsection-heading">A. Algorithm Comparison</h3>
+<p>
+  Table II shows the fragmentation results when allocating five processes (100 KB, 200 KB, 150 KB, 50 KB, 300 KB) into a 768 KB user memory space using each algorithm.
+</p>
+
+<div class="table-caption">TABLE II<br>Algorithm Comparison Results</div>
+<table>
+  <tr><th>Algorithm</th><th>Processes Allocated</th><th>External Fragmentation (%)</th><th>Relative Speed</th></tr>
+  <tr><td>First Fit</td><td>4 of 5</td><td>0.00</td><td>Fastest</td></tr>
+  <tr><td>Best Fit</td><td>4 of 5</td><td>0.00</td><td>Slowest</td></tr>
+  <tr><td>Worst Fit</td><td>4 of 5</td><td>0.00</td><td>Moderate</td></tr>
+</table>
+<p>
+  In this scenario, all three algorithms produce similar fragmentation because the workload fits without creating scattered holes. Differences emerge under heavier workloads with interleaved allocations and deallocations, where Best Fit tends to create many small unusable holes and First Fit concentrates fragmentation near the beginning of memory.
+</p>
+
+<h3 class="subsection-heading">B. Live Process Monitoring</h3>
+<p>
+  The Live System Mode successfully displays the top 10 processes by RSS on macOS, refreshing every 3 seconds. Table III shows a sample output from the <code>/api/memory/pressure</code> endpoint on an 8 GB macOS system.
+</p>
+
+<div class="table-caption">TABLE III<br>Sample Memory Pressure Output</div>
+<table>
+  <tr><th>Metric</th><th>Value</th></tr>
+  <tr><td>Total RAM</td><td>8.0 GB</td></tr>
+  <tr><td>Used RAM</td><td>4.7 GB</td></tr>
+  <tr><td>Used Percentage</td><td>58.9%</td></tr>
+  <tr><td>Pressure Level</td><td>MODERATE</td></tr>
+</table>
+
+<h3 class="subsection-heading">C. Process Detail Inspection</h3>
+<p>
+  Clicking a building in Live Mode fetches extended process information via the <code>/api/process/&lt;pid&gt;</code> endpoint. The response includes thread count, page faults, pageins, copy-on-write faults, executable path, and start time. Testing with a renderer process (PID 59935) returned 21 threads, 2,152,778 page faults, 26,640 pageins, and 2,104 COW faults — providing students with concrete insight into how a real application interacts with the virtual memory subsystem.
+</p>
+
+<h3 class="subsection-heading">D. Visualization Effectiveness</h3>
+<p>
+  The city skyline metaphor maps naturally to memory usage: taller buildings represent more memory consumption, neon colors distinguish large from small processes, and the horizontal layout mirrors the linear address space. The cyberpunk theme with particle effects and glassmorphism increases student engagement by transforming a traditionally abstract topic into a visually compelling experience.
+</p>
+
+<!-- V. CONCLUSION -->
+<h2 class="section-heading">V. Conclusion</h2>
+
+<p>
+  This paper presented NeonHeap, a Memory Allocation Visualizer that bridges the gap between theoretical OS concepts and real system behavior. The tool implements First Fit, Best Fit, Worst Fit, compaction, and buddy system algorithms backed by real <code>mmap()</code> memory, and extends into live process monitoring using platform-specific system calls. The city skyline visualization provides an intuitive and engaging representation of memory state.
+</p>
+<p>
+  Key contributions include: (1) a dual-mode interface combining educational simulation with real OS process data; (2) a process detail modal exposing threads, faults, and executable paths; (3) a system-wide memory pressure indicator with visual thresholds; and (4) a clean C-to-React architecture using POSIX sockets and JSON APIs without external dependencies.
+</p>
+<p>
+  Future work includes adding paging and segmentation simulations, implementing multi-threaded request handling in the HTTP server, supporting additional platforms (Windows via WinAPI), and adding process CPU usage metrics to the live skyline.
+</p>
+
+<!-- ACKNOWLEDGMENT -->
+<h2 class="section-heading">Acknowledgment</h2>
+<p class="no-indent">
+  The author thanks the faculty of the Department of Computer Science for their guidance on operating systems concepts, and acknowledges the open-source community for tools including GCC, React, and Vite that made this project possible.
+</p>
+
+<!-- REFERENCES -->
+<h2 class="section-heading">References</h2>
+<div class="references">
+  <p>[1] W. Stallings, <em>Operating Systems: Internals and Design Principles</em>, 9th ed. Hoboken, NJ: Pearson, 2018.</p>
+  <p>[2] A. Silberschatz, P. B. Galvin, and G. Gagne, <em>Operating System Concepts</em>, 10th ed. Hoboken, NJ: Wiley, 2018.</p>
+  <p>[3] K. Robbins, "Web-Based Visualization Tools for Teaching Operating Systems," in <em>Proc. ACM SIGCSE Tech. Symp. on Computer Science Education</em>, 2019, pp. 284–290.</p>
+  <p>[4] H. Patel, "htop — An Interactive Process Viewer for Unix," 2004. [Online]. Available: https://htop.dev/</p>
+  <p>[5] N. Nethercote and J. Seward, "Valgrind: A Framework for Heavyweight Dynamic Binary Instrumentation," in <em>Proc. ACM SIGPLAN Conf. Programming Language Design and Implementation</em>, 2007, pp. 89–100.</p>
+  <p>[6] Apple Inc., "libproc — Process Information API," macOS Developer Documentation. [Online]. Available: https://developer.apple.com/documentation</p>
+  <p>[7] The Linux Kernel Documentation, "The /proc Filesystem," 2024. [Online]. Available: https://www.kernel.org/doc/html/latest/filesystems/proc.html</p>
+  <p>[8] R. Love, <em>Linux Kernel Development</em>, 3rd ed. Upper Saddle River, NJ: Addison-Wesley, 2010.</p>
+  <p>[9] D. P. Bovet and M. Cesati, <em>Understanding the Linux Kernel</em>, 3rd ed. Sebastopol, CA: O'Reilly, 2005.</p>
+  <p>[10] Meta Platforms Inc., "React — A JavaScript Library for Building User Interfaces," 2024. [Online]. Available: https://react.dev/</p>
+  <p>[11] E. You, "Vite — Next Generation Frontend Tooling," 2024. [Online]. Available: https://vitejs.dev/</p>
+  <p>[12] IEEE Std. POSIX.1-2017, "Standard for Information Technology — Portable Operating System Interface (POSIX)," IEEE, 2017.</p>
+</div>
+
+</div> <!-- end two-col -->
+</body>
+</html>

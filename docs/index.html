@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeonHeap — Memory Allocation Visualizer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(0,255,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(255,0,255,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 80%, rgba(157,78,221,0.04) 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  .header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00ffff, #ff00ff, #9d4edd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-shadow: 0 0 40px rgba(0,255,255,0.3);
+  }
+  .header p {
+    font-size: 1.1rem;
+    color: #888;
+    letter-spacing: 1px;
+  }
+
+  /* Cards */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  .card {
+    background: rgba(20, 20, 35, 0.7);
+    border: 1px solid rgba(0,255,255,0.15);
+    border-radius: 16px;
+    padding: 32px 28px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .card:hover {
+    border-color: rgba(0,255,255,0.5);
+    box-shadow: 0 0 30px rgba(0,255,255,0.15), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+  }
+  .card-icon {
+    font-size: 3rem;
+    filter: drop-shadow(0 0 12px rgba(0,255,255,0.5));
+  }
+  .card h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #00ffff;
+    text-transform: uppercase;
+  }
+  .card p {
+    font-size: 0.9rem;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  .card.report { border-color: rgba(255,0,255,0.15); }
+  .card.report:hover {
+    border-color: rgba(255,0,255,0.5);
+    box-shadow: 0 0 30px rgba(255,0,255,0.15), 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .card.report h2 { color: #ff00ff; }
+
+  .card.github { border-color: rgba(157,78,221,0.15); }
+  .card.github:hover {
+    border-color: rgba(157,78,221,0.5);
+    box-shadow: 0 0 30px rgba(157,78,221,0.15), 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .card.github h2 { color: #9d4edd; }
+
+  .card.pdf { border-color: rgba(57,255,20,0.15); }
+  .card.pdf:hover {
+    border-color: rgba(57,255,20,0.5);
+    box-shadow: 0 0 30px rgba(57,255,20,0.15), 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .card.pdf h2 { color: #39ff14; }
+
+  /* Features */
+  .features {
+    background: rgba(20, 20, 35, 0.5);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+  .features h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+  }
+  .feature-item {
+    font-size: 0.9rem;
+    color: #aaa;
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feature-item span.dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #00ffff;
+    box-shadow: 0 0 6px #00ffff;
+    flex-shrink: 0;
+  }
+
+  .footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #444;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  @media (max-width: 600px) {
+    .cards { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>⬡ NeonHeap</h1>
+    <p>Interactive Memory Allocation Visualizer</p>
+  </div>
+
+  <div class="cards">
+    <a href="project_report.html" class="card report">
+      <div class="card-icon">📄</div>
+      <h2>IEEE Report</h2>
+      <p>Full research paper in IEEE format with methodology, results, and references</p>
+    </a>
+    <a href="project_report.pdf" class="card pdf">
+      <div class="card-icon">📥</div>
+      <h2>Download PDF</h2>
+      <p>Download the IEEE report as a PDF document</p>
+    </a>
+    <a href="https://github.com/Mehak261124/Memory_Management_Visualizer" class="card github">
+      <div class="card-icon">💻</div>
+      <h2>Source Code</h2>
+      <p>View the full project on GitHub — C backend + React frontend</p>
+    </a>
+    <a href="README.md" class="card">
+      <div class="card-icon">📖</div>
+      <h2>Documentation</h2>
+      <p>Project README with architecture, API reference, and build instructions</p>
+    </a>
+  </div>
+
+  <div class="features">
+    <h3>Key Features</h3>
+    <div class="features-grid">
+      <div class="feature-item"><span class="dot"></span> First Fit, Best Fit, Worst Fit</div>
+      <div class="feature-item"><span class="dot"></span> Live OS Process Monitoring</div>
+      <div class="feature-item"><span class="dot"></span> Memory Compaction</div>
+      <div class="feature-item"><span class="dot"></span> Process Detail on Click</div>
+      <div class="feature-item"><span class="dot"></span> Buddy System Allocator</div>
+      <div class="feature-item"><span class="dot"></span> Memory Pressure Indicator</div>
+      <div class="feature-item"><span class="dot"></span> Algorithm Comparison</div>
+      <div class="feature-item"><span class="dot"></span> Cyberpunk City Visualization</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    NeonHeap &copy; 2026 — Operating Systems Project
+  </div>
+
+</div>
+</body>
+</html>

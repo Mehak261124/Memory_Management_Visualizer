@@ -313,10 +313,12 @@ void os_detect_memory_sizes(int *totalMemKB, int *osMemKB) {
     long pageSize  = sysconf(_SC_PAGE_SIZE);
     
     if (physPages <= 0 || pageSize <= 0) {
-        // Fallback to sysctl if sysconf fails
+        // Fallback: use dedicated os_ functions if sysconf fails
         size_t totalRAM = os_get_total_ram();
-        if (totalRAM > 0) {
-            physPages = (long)(totalRAM / (pageSize > 0 ? pageSize : 4096));
+        size_t ps = os_get_page_size();  // use the dedicated function
+        if (totalRAM > 0 && ps > 0) {
+            physPages = (long)(totalRAM / ps);
+            pageSize = (long)ps;
         } else {
             // Ultimate fallback: assume 4 GB
             printf("[os_memory] WARNING: Could not detect system memory, using 4 GB default\n");

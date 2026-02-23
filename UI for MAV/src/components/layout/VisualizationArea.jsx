@@ -1,13 +1,16 @@
 /**
  * VisualizationArea Component
- * Center area containing the city skyline memory visualization
+ * Center area containing either the educational city skyline
+ * or the live process skyline, based on mode toggle
  */
 
 import React from 'react';
 import { CityViewport } from '../visualization/CityViewport';
 import { AlgorithmInspector } from '../visualization/AlgorithmInspector';
+import { LiveCityViewport } from '../LiveCityViewport';
 
 export function VisualizationArea({
+  // Educational mode props
   blocks,
   osMemory,
   totalMemory,
@@ -16,13 +19,29 @@ export function VisualizationArea({
   onZoomOut,
   onResetView,
   selectedBlock,
-  onBlockClick
+  onBlockClick,
+  // Live mode props
+  isLiveMode = false,
+  liveProcesses = [],
+  liveLoading = false,
+  liveError = null,
+  livePermissionWarning = false,
+  liveLastUpdated = null,
+  livePressure = null,
 }) {
   return (
-    <main className="visualization-area">
+    <main className={`visualization-area ${isLiveMode ? 'visualization-area--live' : ''}`}>
       <div className="viz-header">
         <h2 className="viz-title">
-          <span className="neon-text cyan">Memory</span> City Skyline
+          {isLiveMode ? (
+            <>
+              <span className="neon-text cyan">Live</span> Process Skyline
+            </>
+          ) : (
+            <>
+              <span className="neon-text cyan">Memory</span> City Skyline
+            </>
+          )}
         </h2>
         <div className="viz-controls">
           <button className="viz-btn" title="Zoom In" onClick={onZoomIn}>+</button>
@@ -31,15 +50,27 @@ export function VisualizationArea({
         </div>
       </div>
 
-      <CityViewport
-        blocks={blocks}
-        osMemory={osMemory}
-        totalMemory={totalMemory}
-        zoomLevel={zoomLevel}
-        onBlockClick={onBlockClick}
-      />
+      {isLiveMode ? (
+        <LiveCityViewport
+          processes={liveProcesses}
+          loading={liveLoading}
+          error={liveError}
+          permissionWarning={livePermissionWarning}
+          lastUpdated={liveLastUpdated}
+          zoomLevel={zoomLevel}
+          pressure={livePressure}
+        />
+      ) : (
+        <CityViewport
+          blocks={blocks}
+          osMemory={osMemory}
+          totalMemory={totalMemory}
+          zoomLevel={zoomLevel}
+          onBlockClick={onBlockClick}
+        />
+      )}
 
-      <AlgorithmInspector selectedBlock={selectedBlock} />
+      {!isLiveMode && <AlgorithmInspector selectedBlock={selectedBlock} />}
     </main>
   );
 }

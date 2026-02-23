@@ -26,6 +26,7 @@ DESCRIPTION:
 #include "../include/memory_manager.h"
 #include "../include/memory_structures.h"
 #include "../include/os_memory.h"
+#include "../include/proc_reader.h"
 
 // Buffer sizes for HTTP request/response handling
 #define MAX_REQUEST_SIZE  8192    // Max size of incoming HTTP request (8 KB)
@@ -487,6 +488,47 @@ void handleRequest(int clientFd, const char *request, MemoryManager *mm) {
     }
     
     
+    // ========== GET /api/processes ==========
+    // Returns real OS processes as JSON (Live System Mode)
+    if (strcmp(method, "GET") == 0 && (strcmp(path, "/api/processes") == 0 ||
+                                        strcmp(path, "/api/processes/top") == 0)) {
+        
+        char processesJSON[MAX_RESPONSE_SIZE];
+        processes_to_json(processesJSON, sizeof(processesJSON));
+        
+        sendResponse(clientFd, 200, "OK", "application/json", processesJSON);
+        return;
+    }
+    
+    
+    // ========== GET /api/process/<pid> ==========
+    // Returns extended detail about a single process by PID
+    {
+        int detailPid = 0;
+        if (strcmp(method, "GET") == 0 &&
+            sscanf(path, "/api/process/%d", &detailPid) == 1 && detailPid > 0) {
+            
+            char detailJSON[MAX_RESPONSE_SIZE];
+            get_process_detail_json(detailPid, detailJSON, sizeof(detailJSON));
+            
+            sendResponse(clientFd, 200, "OK", "application/json", detailJSON);
+            return;
+        }
+    }
+    
+    
+    // ========== GET /api/memory/pressure ==========
+    // Returns system-wide memory pressure as JSON
+    if (strcmp(method, "GET") == 0 && strcmp(path, "/api/memory/pressure") == 0) {
+        
+        char pressureJSON[MAX_RESPONSE_SIZE];
+        get_memory_pressure_json(pressureJSON, sizeof(pressureJSON));
+        
+        sendResponse(clientFd, 200, "OK", "application/json", pressureJSON);
+        return;
+    }
+    
+    
     // ========== 404 NOT FOUND ==========
     // No matching route found
     char notFound[256];
@@ -578,6 +620,10 @@ int startServer(MemoryManager *mm, int port) {
     printf("║  POST /api/buddy/convert  Enable buddy system    ║\n");
     printf("║  POST /api/buddy/revert   Disable buddy system   ║\n");
     printf("║  POST /api/reset          Reset memory           ║\n");
+    printf("║  GET  /api/processes      Live processes (top 10) ║\n");
+    printf("║  GET  /api/processes/top  Live processes (top 10) ║\n");
+    printf("║  GET  /api/process/<pid>  Process detail by PID   ║\n");
+    printf("║  GET  /api/memory/pressure System memory pressure ║\n");
     printf("║                                                  ║\n");
     printf("║  Press Ctrl+C to stop the server                 ║\n");
     printf("╚══════════════════════════════════════════════════╝\n");
