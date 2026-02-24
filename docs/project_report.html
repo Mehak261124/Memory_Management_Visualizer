@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NeonHeap: Memory Allocation Visualizer — IEEE Report</title>
+<title>NeonHeap: An Interactive Memory Allocation Visualizer with Live Operating System Process Monitoring</title>
 <style>
   /* IEEE-style formatting */
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page {
+    size: A4;
+    margin: 19mm 14.32mm 43mm 14.32mm;
+  }
 
   body {
     font-family: 'Times New Roman', 'EB Garamond', Times, serif;
@@ -16,9 +21,9 @@
     line-height: 1.4;
     color: #000;
     background: #fff;
-    max-width: 8.5in;
+    max-width: 210mm;
     margin: 0 auto;
-    padding: 0.75in 0.56in 1.69in 0.56in;
+    padding: 19mm 14.32mm 43mm 14.32mm;
   }
 
   /* Title block — single column, centered */
@@ -70,10 +75,9 @@
     font-style: italic;
   }
 
-  /* Two-column layout */
+  /* Single-column layout (per conference template) */
   .two-col {
-    column-count: 2;
-    column-gap: 0.3in;
+    column-count: 1;
     text-align: justify;
   }
 
@@ -189,7 +193,7 @@
   /* Print */
   @media print {
     body { padding: 0; max-width: none; }
-    .two-col { column-count: 2; }
+    .two-col { column-count: 1; }
   }
 </style>
 </head>
@@ -198,9 +202,9 @@
 <!-- ======================== TITLE BLOCK ======================== -->
 <div class="title-block">
   <h1>NeonHeap: An Interactive Memory Allocation Visualizer with Live Operating System Process Monitoring</h1>
-  <div class="author-name">Mehak Jain, Anuj Kumar Singh</div>
-  <div class="author-affiliation">Rishihood University</div>
-  <div class="author-email">mehak.j23csai@nst.rishihood.edu.in, anuj.k23csai@nst.rishihood.edu.in</div>
+  <div class="author-name">Mehak Jain<sup>1</sup>, Anuj Kumar Singh<sup>2</sup></div>
+  <div class="author-affiliation"><sup>1,2</sup>Department of Computer Science, Rishihood University, India</div>
+  <div class="author-email"><sup>1</sup>mehak.j23csai@nst.rishihood.edu.in; <sup>2</sup>anuj.k23csai@nst.rishihood.edu.in</div>
 </div>
 
 <!-- ======================== ABSTRACT ======================== -->

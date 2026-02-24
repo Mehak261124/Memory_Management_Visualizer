@@ -119,20 +119,39 @@ Memory_Management_Visualizer/
 ### Prerequisites
 - **GCC** compiler (Xcode CLI tools on macOS, `build-essential` on Linux)
 - **Node.js** ≥ 18 and **npm**
+- **Make** (pre-installed on macOS and most Linux distributions)
 
-### 1. Compile the C Backend
+### Quick Start (One Command)
 
 ```bash
-cd Memory_Management_Visualizer
-gcc src/*.c -I include -o build/memory_visualizer -framework CoreFoundation
+bash run.sh
 ```
 
-> On Linux, omit `-framework CoreFoundation`:
-> ```bash
-> gcc src/*.c -I include -o build/memory_visualizer
-> ```
+This compiles the C backend, starts the API server on port 8080, and launches the React dev server automatically.
 
-### 2. Start the Backend Server
+### Using the Makefile
+
+| Command | Description |
+|---------|-------------|
+| `make` | Compile the C backend → `build/memory_visualizer` |
+| `make run` | Compile and start the API server on port 8080 |
+| `make debug` | Compile with `-g` debug symbols for GDB/LLDB |
+| `make clean` | Remove all compiled binaries |
+| `make frontend` | Install npm deps and start the React dev server |
+| `make help` | Show all available targets |
+
+### Manual Steps
+
+#### 1. Compile the C Backend
+
+```bash
+make
+```
+
+> Or manually: `gcc src/*.c -I include -o build/memory_visualizer -framework CoreFoundation`
+> On Linux, omit `-framework CoreFoundation`.
+
+#### 2. Start the Backend Server
 
 ```bash
 ./build/memory_visualizer --server 8080
@@ -140,7 +159,7 @@ gcc src/*.c -I include -o build/memory_visualizer -framework CoreFoundation
 
 The server will display all available API endpoints and listen on `http://localhost:8080`.
 
-### 3. Start the React Frontend
+#### 3. Start the React Frontend
 
 ```bash
 cd "UI for MAV"
@@ -150,13 +169,80 @@ npm run dev
 
 Open `http://localhost:5173` in your browser.
 
-### 4. Interactive Text Mode (Optional)
+#### 4. Interactive Text Mode (Optional)
 
 ```bash
 ./build/memory_visualizer
 ```
 
 Runs a terminal-based menu for direct interaction without the React frontend.
+
+---
+
+## 🐛 Debugging with GDB / LLDB
+
+The project includes a `make debug` target that compiles with debug symbols (`-g -O0`) for use with GDB or LLDB.
+
+### Build for Debugging
+
+```bash
+make debug
+```
+
+This creates `build/memory_visualizer_debug` with full debug information.
+
+### Debugging with LLDB (macOS)
+
+```bash
+lldb build/memory_visualizer_debug
+(lldb) run --server 8080
+
+# Set breakpoints on key functions
+(lldb) breakpoint set --name firstFit
+(lldb) breakpoint set --name compact
+(lldb) breakpoint set --name buddyAllocate
+
+# When breakpoint hits, inspect variables
+(lldb) frame variable mm->freeMemory
+(lldb) frame variable current->startAddress
+(lldb) print mm->numHoles
+
+# Step through code
+(lldb) next        # step over
+(lldb) step        # step into
+(lldb) continue    # resume execution
+```
+
+### Debugging with GDB (Linux)
+
+```bash
+gdb build/memory_visualizer_debug
+(gdb) run --server 8080
+
+# Set breakpoints
+(gdb) break firstFit
+(gdb) break compact
+(gdb) break deallocateMemory
+
+# Inspect memory manager state
+(gdb) print mm->freeMemory
+(gdb) print mm->numProcesses
+(gdb) print *current
+
+# Walk the linked list
+(gdb) print mm->head->startAddress
+(gdb) print mm->head->next->startAddress
+```
+
+### Useful Debugging Scenarios
+
+| Scenario | What to Debug | Breakpoint |
+|----------|--------------|------------|
+| Allocation fails unexpectedly | Check hole sizes vs. request | `firstFit`, `bestFit`, `worstFit` |
+| Fragmentation too high | Inspect hole distribution | `calculateFragmentation` |
+| Compaction not merging | Verify linked list rebuild | `compact` |
+| Buddy split/merge issues | Track buddy IDs | `buddyAllocate`, `buddyDeallocate` |
+| Process not found on dealloc | Check processID matching | `deallocateMemory` |
 
 ---
 
